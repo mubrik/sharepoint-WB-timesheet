@@ -8,8 +8,9 @@ import {
 import { BaseClientSideWebPart } from '@microsoft/sp-webpart-base';
 
 import * as strings from 'FluentTestingWebPartStrings';
-import MainPage from './components/FluentTesting';
-import { IFluentTestingProps } from './components/IFluentTestingProps';
+import MainPage, {IMainProps} from './components/FluentTesting';
+import { sp } from "@pnp/sp";
+import "@pnp/sp/webs";
 
 export interface IFluentTestingWebPartProps {
   description: string;
@@ -18,7 +19,7 @@ export interface IFluentTestingWebPartProps {
 export default class FluentTestingWebPart extends BaseClientSideWebPart<IFluentTestingWebPartProps> {
 
   public render(): void {
-    const element: React.ReactElement<IFluentTestingProps> = React.createElement(
+    const element: React.ReactElement<IMainProps> = React.createElement(
       MainPage,
       {
         description: this.properties.description,
@@ -27,6 +28,20 @@ export default class FluentTestingWebPart extends BaseClientSideWebPart<IFluentT
     );
 
     ReactDom.render(element, this.domElement);
+  }
+
+  public onInit(): Promise<void> {
+
+    return super.onInit().then(_ => {
+  
+      // other init code may be present
+  
+      sp.setup({
+        spfxContext: this.context
+      });
+
+      console.log("initialiabs")
+    });
   }
 
   protected onDispose(): void {

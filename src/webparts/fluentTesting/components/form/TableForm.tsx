@@ -1,22 +1,45 @@
 import * as React from 'react';
-import { TextField, PrimaryButton, Stack } from 'office-ui-fabric-react';
+import { PrimaryButton, Stack, StackItem} from 'office-ui-fabric-react';
 import { GridReadyEvent, GridApi, ColumnApi, AllCommunityModules, RowSelectedEvent} from "@ag-grid-community/all-modules";
 import { AgGridReact, AgGridColumn} from "@ag-grid-community/react";
+import { useMediaQuery } from 'react-responsive';
 import "ag-grid-enterprise";
 import "@ag-grid-community/client-side-row-model";
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-alpine.css';
 // option tables
 import {projectOptions, taskOptions,
-   locationOptions, rowData
+   locationOptions
 } from "./optionSelect";
-import TimeEditor, {numberParser} from './customCellEditor';
+// sampleData and types
+import { IUserWeek, IWeekData, IUserWeekData  } from '../sampleData';
 // types
-import {ITableControlProps, INewFormProps} from "./INewFormProps"
+import {ITableControlProps} from "./INewFormProps"
+// time column editor
+import TimeEditor from './customCellEditor';
 // hooks
 import {useGetDatesHook} from "./reactHooks";
 
-const TableForm: React.FunctionComponent<INewFormProps> = (props: INewFormProps)  => {
+export interface IProps {
+  dateObj?: Date;
+  id?: string
+  setDataApi?: React.Dispatch<React.SetStateAction<GridApi|null>>;
+  editData?: IUserWeek
+}
+
+const TableForm: React.FunctionComponent<IProps> = (props: IProps)  => {
+
+  // media queries
+  const isTablet = useMediaQuery({ minWidth: 768 });
+  const isMobile = useMediaQuery({ minWidth: 320, maxWidth: 767 });
+  const smTab = useMediaQuery({ minWidth:768, maxWidth: 1023});
+  const mdTab = useMediaQuery({ minWidth:1024, maxWidth: 1279});
+  const lgTab = useMediaQuery({ minWidth:1280, maxWidth: 1365});
+  const xlgTab = useMediaQuery({ minWidth:1366, maxWidth: 1440});
+
+  // data to be used
+  let tableData: IUserWeekData[] = props.editData ? props.editData.data : [];
+  console.log(tableData);
 
   // exposing grid and column api
   const [gridApi, setGridApi] = React.useState<null | GridApi>(null);
@@ -25,10 +48,13 @@ const TableForm: React.FunctionComponent<INewFormProps> = (props: INewFormProps)
   const [rowSelected, setRowSelected] = React.useState<number[]>([]);
   // date list hook
   const selectedDates = useGetDatesHook(props.dateObj);
+  // data
+  const [formData, setFormData] = React.useState<IUserWeekData[]|[]>(tableData);
 
   // exposes grid api
   const handleGridReady = (event:GridReadyEvent) => {
     setGridApi(event.api);
+    props.setDataApi(event.api);
     setGridColumnApi(event.columnApi);
   };
   // handle rowselected state
@@ -47,11 +73,18 @@ const TableForm: React.FunctionComponent<INewFormProps> = (props: INewFormProps)
   };
 
   // col props
-  const colProps = {
-    width: 64,
-    maxWidth: 120,
+  const timeColProps = {
+    width: (smTab && 50) || (mdTab && 52) || (lgTab && 64) || (xlgTab && 90),
     resizable: true,
   }
+  const highPriorityDetailProps = {
+    minWidth: (smTab && 74) || (mdTab && 110) || (lgTab && 124) || (xlgTab && 134),
+    resizable: true,
+  }
+  const lowPriorityDetailProps = {
+    width: (smTab && 52) || (mdTab && 90) || (lgTab && 100) || (xlgTab && 110),
+    resizable: true,
+  } 
   // format date column labels
   const formatLabel = (day: string, index: number):string => {
     // if date is null for some reason
@@ -77,55 +110,68 @@ const TableForm: React.FunctionComponent<INewFormProps> = (props: INewFormProps)
 
   return (
     <Stack tokens={{ childrenGap: 7 }}>
-      <TableControls
-        api={gridApi}
-        column={gridColumnApi}
-        rowState={rowSelected}
-      />
-    <div className="ag-theme-alpine" style={{height: 400, width: 1240}}>
-      <AgGridReact
-        rowData={rowData}
-        rowSelection="multiple"
-        onGridReady={handleGridReady}
-        getContextMenuItems={getContextMenuItems}
-        modules={AllCommunityModules}
-        enableRangeSelection={true}
-        frameworkComponents={{
-          "timeEditor" : TimeEditor
-        }}
-        onRowSelected={handleselectionChange}
-        >
-        <AgGridColumn
-          field="Project"
-          cellEditor="agSelectCellEditor"
-          cellEditorParams={{cellHeight: 200, values: projectOptions}}
-          editable={true}
-          checkboxSelection={checkboxSelection}
-          headerCheckboxSelection={headerCheckboxSelection}
+      <div>
+        {smTab && <div>small</div>}
+        {mdTab && <div>medium</div>}
+        {lgTab && <div>largeTablet</div>}
+        {xlgTab && <div>xxlargeTablet</div>}
+      </div>
+      <StackItem align="start">
+        <TableControls
+          api={gridApi}
+          column={gridColumnApi}
+          rowState={rowSelected}
         />
-        <AgGridColumn
-          field="Location"
-          cellEditor="agSelectCellEditor"
-          cellEditorParams={{cellHeight: 200, values: locationOptions}}
-          editable={true}
-        />
-        <AgGridColumn
-          field="Task Type"
-          cellEditor="agSelectCellEditor"
-          cellEditorParams={{cellHeight: 200, values: taskOptions}}
-          editable={true}
-        />
-        <AgGridColumn sortable={ true } editable field="FreshService"></AgGridColumn>
-        <AgGridColumn sortable={ true } editable field="Activity Desription"></AgGridColumn>
-        <AgGridColumn editable {...colProps} cellEditor={"timeEditor"} field="mon" headerName={formatLabel("mon", 0)}></AgGridColumn>
-        <AgGridColumn editable {...colProps} cellEditor={"timeEditor"} field="tue" headerName={formatLabel("tue", 2)}></AgGridColumn>
-        <AgGridColumn editable {...colProps} cellEditor={"timeEditor"} field="wed"></AgGridColumn>
-        <AgGridColumn editable {...colProps} cellEditor={"timeEditor"} field="thu"></AgGridColumn>
-        <AgGridColumn editable {...colProps} cellEditor={"timeEditor"} field="fri"></AgGridColumn>
-        <AgGridColumn editable {...colProps} cellEditor={"timeEditor"} field="sat"></AgGridColumn>
-        <AgGridColumn editable {...colProps} cellEditor={"timeEditor"} field="sun"></AgGridColumn>
-      </AgGridReact>
-    </div>
+      </StackItem>
+      <StackItem align="stretch">
+        <div className="ag-theme-alpine" style={{height: 500, width: "100%"}}>
+          <AgGridReact
+            rowData={formData}
+            rowSelection="multiple"
+            onGridReady={handleGridReady}
+            getContextMenuItems={getContextMenuItems}
+            modules={AllCommunityModules}
+            enableRangeSelection={true}
+            frameworkComponents={{
+              "timeEditor" : TimeEditor
+            }}
+            onRowSelected={handleselectionChange}
+            >
+            <AgGridColumn
+              field="Project"
+              cellEditor="agSelectCellEditor"
+              cellEditorParams={{values: projectOptions}}
+              editable={true}
+              checkboxSelection={checkboxSelection}
+              headerCheckboxSelection={headerCheckboxSelection}
+              {...highPriorityDetailProps}
+            />
+            <AgGridColumn
+              field="Location"
+              cellEditor="agSelectCellEditor"
+              cellEditorParams={{cellHeight: 200, values: locationOptions}}
+              editable={true}
+              {...lowPriorityDetailProps}
+            />
+            <AgGridColumn
+              field="Task"
+              cellEditor="agSelectCellEditor"
+              cellEditorParams={{cellHeight: 200, values: taskOptions}}
+              editable={true}
+              {...lowPriorityDetailProps}
+            />
+            {/* <AgGridColumn editable {...detailColProps} field="FreshService"></AgGridColumn> */}
+            <AgGridColumn editable {...highPriorityDetailProps} field="Activity Desription"></AgGridColumn>
+            <AgGridColumn editable {...timeColProps} cellEditor={"timeEditor"} field="monday" headerName={formatLabel("Mon", 0)}></AgGridColumn>
+            <AgGridColumn editable {...timeColProps} cellEditor={"timeEditor"} field="tuesday" headerName={formatLabel("Tue", 1)}></AgGridColumn>
+            <AgGridColumn editable {...timeColProps} cellEditor={"timeEditor"} field="wednesday" headerName={formatLabel("Wed", 2)}></AgGridColumn>
+            <AgGridColumn editable {...timeColProps} cellEditor={"timeEditor"} field="thursday" headerName={formatLabel("Thu", 3)}></AgGridColumn>
+            <AgGridColumn editable {...timeColProps} cellEditor={"timeEditor"} field="friday" headerName={formatLabel("Fri", 4)}></AgGridColumn>
+            <AgGridColumn editable {...timeColProps} cellEditor={"timeEditor"} field="saturday" headerName={formatLabel("Sat", 5)}></AgGridColumn>
+            <AgGridColumn editable {...timeColProps} cellEditor={"timeEditor"} field="sunday" headerName={formatLabel("Sun", 6)}></AgGridColumn>
+          </AgGridReact>
+        </div>
+      </StackItem>  
     </Stack>
   );
 };
@@ -165,15 +211,6 @@ const TableControls: React.FunctionComponent<ITableControlProps> = (props:ITable
     });
   };
 
-  const testingData = e => {
-    e.preventDefault();
-    props.api.forEachNode((rowNode, index) => {
-      console.log(rowNode.data);
-    })
-  }
-
-
-
   return(
     <>
       <Stack horizontal tokens={{ childrenGap: 7 }} wrap={true} horizontalAlign={"start"}>
@@ -191,10 +228,6 @@ const TableControls: React.FunctionComponent<ITableControlProps> = (props:ITable
           text="Remove Selected Rows"
           onClick={removeRowClick}
           disabled={(props.rowState.length === 0)}
-        />
-        <PrimaryButton
-          text="Test Data Access"
-          onClick={testingData}
         />
       </Stack>
     </>

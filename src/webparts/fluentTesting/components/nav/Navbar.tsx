@@ -1,20 +1,23 @@
 import * as React from 'react';
-import { Label, IPivotItemProps, Pivot, PivotItem } from 'office-ui-fabric-react';
-import {INavProps} from "./INavProps";
+import { Stack, Pivot, PivotItem } from 'office-ui-fabric-react';
 
-export const NavBar: React.FunctionComponent<INavProps> = (props:INavProps) => {
+export interface IProps {
+  pageState: string;
+  setPageState: React.Dispatch<React.SetStateAction<string>>
+}
+
+export const NavBar: React.FunctionComponent<IProps> = (props:IProps) => {
 
     return(
-        <div>
+        <Stack>
           <Pivot
             aria-label={"pivot"}
             onLinkClick={(item) => {props.setPageState(item.props.itemKey)}}
           >
-            <PivotItem headerText="Period" itemKey="period"/>
             <PivotItem headerText="New" itemKey="new"/>
             <PivotItem headerText="Draft" itemKey="drafts"/>
           </Pivot>
-        </div>
+        </Stack>
     );
 };
 

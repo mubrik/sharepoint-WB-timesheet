@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { TextField, MaskedTextField, Stack } from 'office-ui-fabric-react';
 import { Dropdown, DropdownMenuItemType, IDropdownOption, IDropdownStyles } from 'office-ui-fabric-react';
-import TableForm from './TableForm';
 // types
 import {INewFormProps} from "./INewFormProps";
 // hooks
@@ -23,60 +22,53 @@ const dropdownControlledExampleOptions = [
 const ControlledFormPage: React.FunctionComponent<INewFormProps> = (props: INewFormProps) => {
 
   // states, should use a reducer instead later
-  /* const [project, setProject] = React.useState<IDropdownOption>();
+  const [project, setProject] = React.useState<IDropdownOption>();
   const [location, setLocation] = React.useState<IDropdownOption>();
   const [task, setTask] = React.useState<IDropdownOption>();
   const [freshservice, setFreshservice] = React.useState('');
-  const [description, setDescription] = React.useState(''); */
+  const [description, setDescription] = React.useState('');
+
+  console.log(`id: ${props.id}`)
 
   return(
-    <>
-      {/* <form noValidate>
-        <Stack horizontal tokens={{ childrenGap: 7 }} wrap={true} horizontalAlign={"space-evenly"}>
-          <Dropdown
-            label="Project"
-            placeholder={"Select A Project"}
-            selectedKey={project ? project.key : undefined}
-            options={dropdownControlledExampleOptions}
-            onChange={(event, item) => setProject(item)}
-          />
-          <Dropdown
-            label="location"
-            placeholder={"Select A location"}
-            selectedKey={location ? location.key : undefined}
-            options={dropdownControlledExampleOptions}
-            onChange={(event, item) => setLocation(item)}
-          />
-          <Dropdown
-            label="task"
-            placeholder={"Select A task"}
-            selectedKey={task ? task.key : undefined}
-            options={dropdownControlledExampleOptions}
-            onChange={(event, item) => setTask(item)}
-          />
-          <TextField
-            label={"freshservice reference"}
-            value={freshservice}
-            onChange={(event, newValue) => {setFreshservice(newValue);}}
-          />
-        </Stack>
-        <Stack horizontalAlign={"stretch"}>
-          <TextField
-            label={"description"}
-            value={description}
-            onChange={(event, newValue) => {setDescription(newValue);}}
-          />
-        </Stack>
-        <ControlledDayForm
-          dateObj={props.dateObj}
-        />
-      </form> */}
+    <Stack tokens={{ childrenGap: 7 }} horizontal horizontalAlign={"space-between"}>
       <Stack>
-        <TableForm
-          dateObj={props.dateObj}
+        <Dropdown
+          label="Project"
+          placeholder={"Select A Project"}
+          selectedKey={project ? project.key : undefined}
+          options={dropdownControlledExampleOptions}
+          onChange={(event, item) => setProject(item)}
+        />
+        <Dropdown
+          label="location"
+          placeholder={"Select A location"}
+          selectedKey={location ? location.key : undefined}
+          options={dropdownControlledExampleOptions}
+          onChange={(event, item) => setLocation(item)}
+        />
+        <Dropdown
+          label="task"
+          placeholder={"Select A task"}
+          selectedKey={task ? task.key : undefined}
+          options={dropdownControlledExampleOptions}
+          onChange={(event, item) => setTask(item)}
+        />
+        <TextField
+          label={"freshservice reference"}
+          value={freshservice}
+          onChange={(event, newValue) => {setFreshservice(newValue);}}
+        />
+        <TextField
+          label={"description"}
+          value={description}
+          onChange={(event, newValue) => {setDescription(newValue);}}
         />
       </Stack>
-      </>
+      <ControlledDayForm
+        dateObj={new Date()}
+      />
+    </Stack>
   );
 };
 
@@ -103,7 +95,7 @@ const ControlledDayForm: React.FunctionComponent<INewFormProps> = (props: INewFo
   };
 
   return(
-    <Stack horizontal tokens={{ childrenGap: 2 }} wrap={true} horizontalAlign={"space-evenly"}>
+    <Stack tokens={{ childrenGap: 2 }} horizontalAlign={"space-evenly"}>
       <MaskedTextField label={formatLabel("sun", 0)} mask="h\h-mm: (99).(99)" onChange={(event, newValue) => setSun(Number(newValue))}/>
       <MaskedTextField label={formatLabel("mon", 1)} mask="h\h-mm: (99).(99)" onChange={(event, newValue) => setMon(Number(newValue))}/>
       <MaskedTextField label={formatLabel("tue", 2)} mask="h\h-mm: (99).(99)" onChange={(event, newValue) => setTue(Number(newValue))}/>
