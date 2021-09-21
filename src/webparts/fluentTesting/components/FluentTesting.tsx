@@ -1,30 +1,27 @@
 import * as React from 'react';
-import { WebPartContext } from "@microsoft/sp-webpart-base";
-import { Stack } from 'office-ui-fabric-react';
-import { escape } from '@microsoft/sp-lodash-subset';
+// UI
+import { Stack, IconButton } from 'office-ui-fabric-react';
+import { ThemeProvider } from '@uifabric/foundation';
+import { createTheme } from '@uifabric/styling';
+/* import { escape } from '@microsoft/sp-lodash-subset'; */
 // custom components
 import {NavBar} from "./nav/Navbar";
 import NewProjectPage from "./form/NewProjectPage"
 import DraftPage from './draft/DraftPage';
-// sample data and type
-import {IYearData, IUserYear, IUserWeek, testData} from "./sampleData";
-// pnp
-import { sp } from "@pnp/sp";
-import "@pnp/sp/webs";
-import "@pnp/sp/items";
-import "@pnp/sp/folders";
-import "@pnp/sp/lists";
+// sample data and types
+import { IUserYear, IUserWeek, testData} from "./sampleData";
+import { WebPartContext } from "@microsoft/sp-webpart-base";
 
 export interface IMainProps {
   description: string;
   context: WebPartContext;
 }
-
+// state type
 export type IState = {
   data: {}|IUserYear;
   status: string;
 } 
-
+// action types
 type IAction =
  | { type: "updateAll", payload:IState }
  | { type: "updateLoading", payload: {status: string} }
@@ -70,14 +67,13 @@ export const StoreData = React.createContext(null);
 const MainPage: React.FunctionComponent<IMainProps> = (props:IMainProps) => {
 
   // page state
-  const [pageState, setPageState] = React.useState("new");
+  const [pageState, setPageState] = React.useState("drafts");
+  // dark mode?
+  const [isDark, setIsDark] = React.useState<boolean>(false);
   // date selected
   const [date, setDate] = React.useState<Date | null>(null);
-  // data
+  // main data and dispatch store
   const [data, dispatchStore] = React.useReducer(myReducer, {data: {}, status: "idle"});
-  
-  console.log(data);
-
 
   // useeffect for width
   React.useEffect(() => {
@@ -108,26 +104,63 @@ const MainPage: React.FunctionComponent<IMainProps> = (props:IMainProps) => {
 
   }, []);
 
+  // theme props
+  const myTheme = createTheme({
+    palette: {
+      themePrimary: '#9259d4',
+      themeLighterAlt: '#060408',
+      themeLighter: '#170e22',
+      themeLight: '#2c1b3f',
+      themeTertiary: '#58357f',
+      themeSecondary: '#814eba',
+      themeDarkAlt: '#9c67d8',
+      themeDark: '#aa7cde',
+      themeDarker: '#bf9ce7',
+      neutralLighterAlt: '#ffffff',
+      neutralLighter: '#ffffff',
+      neutralLight: '#ffffff',
+      neutralQuaternaryAlt: '#ffffff',
+      neutralQuaternary: '#ffffff',
+      neutralTertiaryAlt: '#ffffff',
+      neutralTertiary: '#595959',
+      neutralSecondary: '#373737',
+      neutralPrimaryAlt: '#2f2f2f',
+      neutralPrimary: '#000000',
+      neutralDark: '#151515',
+      black: '#0b0b0b',
+      white: '#ffffff',
+    },
+    semanticColors: {
+      bodyBackground: isDark ? "black" : "white",
+      bodyText: isDark ? "white" : "dark"
+    },
+  });
+
   return(
+    <ThemeProvider theme={myTheme}>
     <Stack>
       <StoreDispatch.Provider value={dispatchStore}>
         <StoreData.Provider value={data}>
-          <nav><NavBar pageState={pageState} setPageState={setPageState}/></nav>
-          <main>
-            {pageState === "new" &&
-              <NewProjectPage
-                dateObj={date}
-                setDateApi={setDate}
-              />
-            }
-            {pageState === "drafts" &&
-              <DraftPage
-              />
-            }
-          </main>
+            <Stack horizontal>
+              <NavBar pageState={pageState} setPageState={setPageState}/>
+              <IconButton iconProps={{ iconName: 'ToggleLeft' }} title="Dark Mode" aria-label={"toggle"} onClick={() => {setIsDark(old => !old)}}/>
+            </Stack>
+            <Stack>
+              {pageState === "new" &&
+                <NewProjectPage
+                  dateObj={date}
+                  setDateApi={setDate}
+                />
+              }
+              {pageState === "drafts" &&
+                <DraftPage
+                />
+              }
+            </Stack>
         </StoreData.Provider>
       </StoreDispatch.Provider>
     </Stack>
+    </ThemeProvider>
   );
 };
 

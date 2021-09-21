@@ -1,42 +1,15 @@
 import * as React from 'react';
+// context
+import {StoreDispatch, StoreData, IState} from "../FluentTesting";
+// UI
 import {
   Dropdown, IDropdownOption,
   Stack, PrimaryButton,
   StackItem, DatePicker
 } from 'office-ui-fabric-react';
+// utils
+import {weekToDate} from "../utils/utils";
 
-/**
-* get date by week number
-* @param  {Number} year 
-* @param  {Number} week 
-* @param  {Number} day of week (optional; default = 0 (Sunday)) 
-* @return {Date}      
-*/
-
-function weekToDate(year: number, week: number, weekDay = 1): Date {
-
-  const getZeroBasedIsoWeekDay = date => (date.getDay() + 6) % 7;
-  const getIsoWeekDay = date => getZeroBasedIsoWeekDay(date) + 1;
-  const zeroBasedWeek = week - 1;
-  const zeroBasedWeekDay = weekDay - 1;
-  let days = (zeroBasedWeek * 7) + zeroBasedWeekDay;
-      // Dates start at 2017-01-01 and not 2017-01-00
-      days += 1;
-
-  const firstDayOfYear = new Date(year, 0, 1);
-  const firstIsoWeekDay = getIsoWeekDay(firstDayOfYear);
-  const zeroBasedFirstIsoWeekDay = getZeroBasedIsoWeekDay(firstDayOfYear);
-
-  // If year begins with W52 or W53
-  if (firstIsoWeekDay > 4) {
-    days += 8 - firstIsoWeekDay; 
-  // Else begins with W01
-  } else {
-    days -= zeroBasedFirstIsoWeekDay;
-  }
-  
-  return new Date(year, 0, days);
-};
 // types
 export interface IProps {
   setDate: React.Dispatch<React.SetStateAction<Date>>;
@@ -47,6 +20,10 @@ export interface IProps {
 }
 
 const PeriodInput: React.FunctionComponent<IProps> = (props:IProps) => {
+
+  // context
+  const storeData: IState = React.useContext(StoreData);
+  const storeDispatch = React.useContext(StoreDispatch);
 
   // handle item selected
   const handleYearChange = (event: React.FormEvent<HTMLDivElement>, item: IDropdownOption) => {

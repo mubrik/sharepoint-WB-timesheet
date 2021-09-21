@@ -1,10 +1,9 @@
 import * as React from 'react';
+// UI
 import { TextField, MaskedTextField, Stack } from 'office-ui-fabric-react';
 import { Dropdown, DropdownMenuItemType, IDropdownOption, IDropdownStyles } from 'office-ui-fabric-react';
-// types
-import {INewFormProps} from "./INewFormProps";
 // hooks
-import {useGetDatesHook} from "./reactHooks";
+import {useGetDatesHook} from "../utils/reactHooks";
 
 const dropdownControlledExampleOptions = [
   { key: 'fruitsHeader', text: 'Fruits', itemType: DropdownMenuItemType.Header },
@@ -71,6 +70,11 @@ const ControlledFormPage: React.FunctionComponent<INewFormProps> = (props: INewF
     </Stack>
   );
 };
+
+interface INewFormProps {
+  dateObj?: Date;
+  id?: string
+}
 
 const ControlledDayForm: React.FunctionComponent<INewFormProps> = (props: INewFormProps) => {
 

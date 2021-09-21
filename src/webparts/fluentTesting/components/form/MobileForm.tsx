@@ -1,4 +1,4 @@
-import { Stack, StackItem, IconButton } from '@microsoft/office-ui-fabric-react-bundle';
+/* import { Stack, StackItem, IconButton } from '@microsoft/office-ui-fabric-react-bundle';
 import * as React from 'react';
 import ControlledFormPage from './NewForm';
 import {INewFormProps, IListStore} from "./INewFormProps";
@@ -6,6 +6,18 @@ import {INewFormProps, IListStore} from "./INewFormProps";
 function getRandomInt(max: number): number {
   return Math.floor(Math.random() * max);
 };
+
+interface INewFormProps {
+  dateObj?: Date;
+  id?: string
+  setDataApi?: React.Dispatch<React.SetStateAction<GridApi|IListStore|null>>;
+}
+
+interface IListStore {
+  list: React.ReactElement[];
+  current: number|null;
+  next: number|null;
+  previous: number|null;
 
 const MobileFormPage: React.FunctionComponent<INewFormProps> = (props:INewFormProps) => {
 
@@ -172,4 +184,4 @@ const MobileFormPage: React.FunctionComponent<INewFormProps> = (props:INewFormPr
   );
 };
 
-export default MobileFormPage;
+export default MobileFormPage; */

@@ -2,14 +2,15 @@ import * as React from 'react';
 // react context
 import {StoreDispatch} from "../FluentTesting";
 // ui
-import { PrimaryButton, Stack, StackItem } from '@microsoft/office-ui-fabric-react-bundle';
+import { PrimaryButton, Stack, StackItem, Label } from 'office-ui-fabric-react';
 import TableForm from '../form/TableForm';
 // gridtable
 import { GridApi} from "@ag-grid-community/all-modules";
 //types
 import { IUserWeek, IUserWeekData } from '../sampleData';
 // utiliity
-import {delay} from "../utils/utils";
+import {delay, weekToDate} from "../utils/utils";
+import {useGetDatesHook} from "../utils/reactHooks";
 
 interface IProps {
   editData?: IUserWeek;
@@ -25,6 +26,10 @@ const EditPage:React.FunctionComponent<IProps> = (props:IProps) => {
   // prepare data
   let _week = props.editData.week;
   let _year = props.editData.year;
+
+  // get date obj
+  let _newDate = weekToDate(_year, _week);
+  let selectedDates = useGetDatesHook(_newDate);
 
   // handle save clicked
   const handleSaveClick = () => {
@@ -61,20 +66,36 @@ const EditPage:React.FunctionComponent<IProps> = (props:IProps) => {
     })
   };
 
+  const handleBackClicked = () => {
+    props.setState((oldValue) => {
+      if (oldValue === "editDraft") {
+        return "new"
+      }
+      return "list"
+    })
+  };
+
   return(
-    <Stack>
+    <Stack tokens={{ childrenGap: 10, padding: 8 }}>
       <StackItem>
-        <PrimaryButton text={"Back"} onClick={() => props.setState("list")}/>
+        <PrimaryButton text={"Back"} onClick={handleBackClicked}/>
+        <Label>
+          {selectedDates ? 
+          `${selectedDates[0].toLocaleString('en-GB', {year: "numeric", weekday: "long", month: "long", day: "numeric"})} to 
+          ${selectedDates[6].toLocaleString('en-GB', {year: "numeric", weekday: "long", month: "long", day: "numeric"})}` :
+          "Select A Date"
+          }
+        </Label>
       </StackItem>
       <StackItem>
         <TableForm
           editData={props.editData}
           setDataApi={setGridApi}
-          dateObj={new Date()}
+          dateObj={_newDate}
         />
       </StackItem>
       <StackItem>
-        <PrimaryButton text={"Save Sheet"} onClick={handleSaveClick} disabled={(_year === null || _week === null)}/>
+        <PrimaryButton text={"Update Draft"} onClick={handleSaveClick} disabled={(_year === null || _week === null)}/>
       </StackItem>
     </Stack>
   )

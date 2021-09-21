@@ -1,11 +1,9 @@
 import { GridApi, ColumnApi} from "@ag-grid-community/all-modules";
-import { IWeekData } from "../sampleData";
 
-export interface INewFormProps {
+/* export interface INewFormProps {
   dateObj?: Date;
   id?: string
   setDataApi?: React.Dispatch<React.SetStateAction<GridApi|IListStore|null>>;
-  editData?: IWeekData
 }
 
 export interface ITableControlProps {
@@ -20,4 +18,4 @@ export interface IListStore {
   next: number|null;
   previous: number|null;
 }
-
+ */

@@ -1,5 +1,8 @@
 import * as React from 'react';
-import { PrimaryButton, Stack, StackItem} from 'office-ui-fabric-react';
+// UI
+import { PrimaryButton, Stack, StackItem, DefaultButton} from 'office-ui-fabric-react';
+import {stylesDanger} from "../utils/utils";
+// grid imports
 import { GridReadyEvent, GridApi, ColumnApi, AllCommunityModules, RowSelectedEvent} from "@ag-grid-community/all-modules";
 import { AgGridReact, AgGridColumn} from "@ag-grid-community/react";
 import { useMediaQuery } from 'react-responsive';
@@ -12,13 +15,11 @@ import {projectOptions, taskOptions,
    locationOptions
 } from "./optionSelect";
 // sampleData and types
-import { IUserWeek, IWeekData, IUserWeekData  } from '../sampleData';
-// types
-import {ITableControlProps} from "./INewFormProps"
+import { IUserWeek, IUserWeekData  } from '../sampleData';
 // time column editor
 import TimeEditor from './customCellEditor';
 // hooks
-import {useGetDatesHook} from "./reactHooks";
+import {useGetDatesHook} from "../utils/reactHooks";
 
 export interface IProps {
   dateObj?: Date;
@@ -39,7 +40,6 @@ const TableForm: React.FunctionComponent<IProps> = (props: IProps)  => {
 
   // data to be used
   let tableData: IUserWeekData[] = props.editData ? props.editData.data : [];
-  console.log(tableData);
 
   // exposing grid and column api
   const [gridApi, setGridApi] = React.useState<null | GridApi>(null);
@@ -176,6 +176,12 @@ const TableForm: React.FunctionComponent<IProps> = (props: IProps)  => {
   );
 };
 
+export interface ITableControlProps {
+  api:GridApi | null;
+  column:ColumnApi | null;
+  rowState?: number[]
+}
+
 const TableControls: React.FunctionComponent<ITableControlProps> = (props:ITableControlProps) => {
 
   // row number state
@@ -224,10 +230,11 @@ const TableControls: React.FunctionComponent<ITableControlProps> = (props:ITable
           text="Add Rows"
           onClick={handleAddRowClick}
         />
-        <PrimaryButton
+        <DefaultButton
           text="Remove Selected Rows"
           onClick={removeRowClick}
           disabled={(props.rowState.length === 0)}
+          styles={stylesDanger}
         />
       </Stack>
     </>

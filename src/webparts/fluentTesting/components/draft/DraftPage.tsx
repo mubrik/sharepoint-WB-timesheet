@@ -2,10 +2,9 @@ import * as React from 'react';
 // react context
 import {StoreDispatch, StoreData, IState} from "../FluentTesting";
 // UI
-import {
-  DetailsList, StackItem,
- Stack, DetailsListLayoutMode,
- Dropdown, IDropdownOption
+import { StackItem, Stack, 
+  Dropdown, IDropdownOption,
+  Spinner, Label
 } from 'office-ui-fabric-react';
 import { Icon, FocusZone, FocusZoneDirection, TextField, List } from 'office-ui-fabric-react';
 import { ITheme, mergeStyleSets, getTheme, getFocusStyle } from 'office-ui-fabric-react';
@@ -83,18 +82,8 @@ const DraftPage: React.FunctionComponent<IDraftProps> = (props:IDraftProps) => {
   // set data
   React.useEffect(() => {
     if (year === null) {
-      /* let fullList:IWeekData[] = []; */
-      
-      /* if (props.userData.status === "loaded") {
-        // list out all weeks
-        props.userData.data.forEach((yearItem) => fullList = [...fullList, ...yearItem.data]);
-
-        // set list 
-        setDataList(fullList);
-        // set shown list
-        setShownItems(fullList);
-      } */
       if (storeData.status === "loaded") {
+        // get data from different year and make a list
         let fullWeeksArray:IUserWeek[] = [];
 
         let _data20: IUserWeeks = storeData.data["2020"];
@@ -204,6 +193,13 @@ const DraftPage: React.FunctionComponent<IDraftProps> = (props:IDraftProps) => {
             <List items={shownItems} onRenderCell={onRenderCell} />
           </FocusZone>
           }
+
+          {
+            !shownItems && 
+            <>
+              <Spinner label={"Loading User Data"} ariaLive="assertive" labelPosition="top"></Spinner>
+            </>
+          }
         </StackItem>
         </>
       }
@@ -217,8 +213,6 @@ const DraftPage: React.FunctionComponent<IDraftProps> = (props:IDraftProps) => {
           />
         </>
       }
-      
-        
     </Stack>
   )
 };

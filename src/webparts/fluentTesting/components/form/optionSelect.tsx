@@ -63,9 +63,3 @@ export const taskOptions: string[] = [
   "DFM carve out",
   "Others",
 ]
-
-export const rowData = [
-  {Project: "IT End User Support", Location: "Remote", FreshService: "35000", "Task":"SuccessFactors" },
-  {Project: "IT End User Support", Location: "Obajana", FreshService: "32000", "Task":"SuccessFactors"},
-  {Project: "Troubleshooting", Location: "Ibese", FreshService: "72000", "Task":"Weighbridge"}
-];

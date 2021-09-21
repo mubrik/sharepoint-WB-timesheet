@@ -13,9 +13,10 @@ export const NavBar: React.FunctionComponent<IProps> = (props:IProps) => {
           <Pivot
             aria-label={"pivot"}
             onLinkClick={(item) => {props.setPageState(item.props.itemKey)}}
+            selectedKey={props.pageState}
           >
-            <PivotItem headerText="New" itemKey="new"/>
             <PivotItem headerText="Draft" itemKey="drafts"/>
+            <PivotItem headerText="New" itemKey="new"/>
           </Pivot>
         </Stack>
     );
