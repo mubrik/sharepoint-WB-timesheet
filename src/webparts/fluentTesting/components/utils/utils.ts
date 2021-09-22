@@ -3,12 +3,13 @@ import { IComponentStyles } from "@uifabric/foundation";
 export const stylesDanger = {
   root: [
     {
-      background: "#f12e2e59",
+      background: "#f12e2ebd",
       selectors: {
         ':hover': {
         },
         ':disabled': {
-          background: "#f74545bd",
+          background: "#f12e2e59",
+          border: "0px solid black"
         },
       }
     }
