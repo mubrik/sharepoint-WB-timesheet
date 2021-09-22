@@ -17,7 +17,7 @@ import {projectOptions, taskOptions,
 // sampleData and types
 import { IUserWeek, IUserWeekData  } from '../sampleData';
 // time column editor
-import TimeEditor from './customCellEditor';
+import TimeEditor, {timeValueFormatter} from './customCellEditor';
 // hooks
 import {useGetDatesHook} from "../utils/reactHooks";
 // utils
@@ -104,16 +104,14 @@ const TableForm: React.FunctionComponent<IProps> = (props: IProps)  => {
     gridApi.forEachNode((rowNode, index) => {
       // get row data
       let rowdata = {...rowNode.data}
-      console.log(rowdata);
 
       Object.keys(rowdata).forEach(colName => {
         if (weekDays.includes(colName)) {
-          console.log(colName)
-          let [hours, minutes, total] = valueToSeconds(rowdata[colName]);
-          totalTime += total;
-        }
-      })
-    })
+          let timeInSec = valueToSeconds(rowdata[colName]);
+          totalTime += timeInSec;
+        };
+      });
+    });
 
     props.setTimeHours(Number(totalTime/3600).toFixed(1));
   }
@@ -206,13 +204,13 @@ const TableForm: React.FunctionComponent<IProps> = (props: IProps)  => {
             />
             {/* <AgGridColumn editable {...detailColProps} field="FreshService"></AgGridColumn> */}
             <AgGridColumn editable {...highPriorityDetailProps} field="Activity Desription"></AgGridColumn>
-            <AgGridColumn editable {...timeColProps} cellEditor={"timeEditor"} field="monday" headerName={formatLabel("Mon", 0)}></AgGridColumn>
-            <AgGridColumn editable {...timeColProps} cellEditor={"timeEditor"} field="tuesday" headerName={formatLabel("Tue", 1)}></AgGridColumn>
-            <AgGridColumn editable {...timeColProps} cellEditor={"timeEditor"} field="wednesday" headerName={formatLabel("Wed", 2)}></AgGridColumn>
-            <AgGridColumn editable {...timeColProps} cellEditor={"timeEditor"} field="thursday" headerName={formatLabel("Thu", 3)}></AgGridColumn>
-            <AgGridColumn editable {...timeColProps} cellEditor={"timeEditor"} field="friday" headerName={formatLabel("Fri", 4)}></AgGridColumn>
-            <AgGridColumn editable {...timeColProps} cellEditor={"timeEditor"} field="saturday" headerName={formatLabel("Sat", 5)}></AgGridColumn>
-            <AgGridColumn editable {...timeColProps} cellEditor={"timeEditor"} field="sunday" headerName={formatLabel("Sun", 6)}></AgGridColumn>
+            <AgGridColumn editable {...timeColProps} cellEditor={"timeEditor"} field="monday" headerName={formatLabel("Mon", 0)} valueFormatter={timeValueFormatter}></AgGridColumn>
+            <AgGridColumn editable {...timeColProps} cellEditor={"timeEditor"} field="tuesday" headerName={formatLabel("Tue", 1)} valueFormatter={timeValueFormatter}></AgGridColumn>
+            <AgGridColumn editable {...timeColProps} cellEditor={"timeEditor"} field="wednesday" headerName={formatLabel("Wed", 2)} valueFormatter={timeValueFormatter}></AgGridColumn>
+            <AgGridColumn editable {...timeColProps} cellEditor={"timeEditor"} field="thursday" headerName={formatLabel("Thu", 3)} valueFormatter={timeValueFormatter}></AgGridColumn>
+            <AgGridColumn editable {...timeColProps} cellEditor={"timeEditor"} field="friday" headerName={formatLabel("Fri", 4)} valueFormatter={timeValueFormatter}></AgGridColumn>
+            <AgGridColumn editable {...timeColProps} cellEditor={"timeEditor"} field="saturday" headerName={formatLabel("Sat", 5)} valueFormatter={timeValueFormatter}></AgGridColumn>
+            <AgGridColumn editable {...timeColProps} cellEditor={"timeEditor"} field="sunday" headerName={formatLabel("Sun", 6)} valueFormatter={timeValueFormatter}></AgGridColumn>
           </AgGridReact>
         </div>
       </StackItem>  
