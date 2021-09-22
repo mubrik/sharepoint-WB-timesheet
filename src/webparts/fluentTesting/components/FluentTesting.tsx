@@ -116,12 +116,12 @@ const MainPage: React.FunctionComponent<IMainProps> = (props:IMainProps) => {
       themeDarkAlt: '#9c67d8',
       themeDark: '#aa7cde',
       themeDarker: '#bf9ce7',
-      neutralLighterAlt: '#ffffff',
-      neutralLighter: '#ffffff',
-      neutralLight: '#ffffff',
-      neutralQuaternaryAlt: '#ffffff',
-      neutralQuaternary: '#ffffff',
-      neutralTertiaryAlt: '#ffffff',
+      neutralLighterAlt: '#f8f8f8',
+      neutralLighter: '#f4f4f4',
+      neutralLight: '#eaeaea',
+      neutralQuaternaryAlt: '#dadada',
+      neutralQuaternary: '#d0d0d0',
+      neutralTertiaryAlt: '#c8c8c8',
       neutralTertiary: '#595959',
       neutralSecondary: '#373737',
       neutralPrimaryAlt: '#2f2f2f',
@@ -131,8 +131,9 @@ const MainPage: React.FunctionComponent<IMainProps> = (props:IMainProps) => {
       white: '#ffffff',
     },
     semanticColors: {
-      bodyBackground: isDark ? "black" : "white",
-      bodyText: isDark ? "white" : "dark"
+      bodyBackground: isDark ? "#000000" : "#ffffff",
+      bodyText: isDark ? "#ffffff" : "#000000",
+      /* disabledBackground: "#595959" */
     },
   });
 

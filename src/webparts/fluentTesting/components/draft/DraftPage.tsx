@@ -174,22 +174,26 @@ const DraftPage: React.FunctionComponent<IDraftProps> = (props:IDraftProps) => {
       {
         pageState === "list" &&
         <>
-        <StackItem>
-          <Dropdown
-            selectedKey={year ? year.key : undefined}
-            label="Select a Year"
-            options={controlledYear}
-            onChange={handleYearChange}
-          />
-        </StackItem>
-        <StackItem>
-          {shownItems && 
-          <FocusZone direction={FocusZoneDirection.vertical}>
+        <Stack horizontal tokens={{ childrenGap: 10, padding: 8 }}>
+          <StackItem>
+            <Dropdown
+              selectedKey={year ? year.key : undefined}
+              label="Select a Year"
+              options={controlledYear}
+              onChange={handleYearChange}
+            />
+          </StackItem>
+          <StackItem>
             <TextField
               label={'Filter by Week'}
               onChange={onFilterChanged}
               type={"number"}
             />
+          </StackItem>
+        </Stack>
+        <Stack>
+          {shownItems && 
+          <FocusZone direction={FocusZoneDirection.vertical}>
             <List items={shownItems} onRenderCell={onRenderCell} />
           </FocusZone>
           }
@@ -200,8 +204,8 @@ const DraftPage: React.FunctionComponent<IDraftProps> = (props:IDraftProps) => {
               <Spinner label={"Loading User Data"} ariaLive="assertive" labelPosition="top"></Spinner>
             </>
           }
-        </StackItem>
-        </>
+        </Stack>
+      </>
       }
 
       {

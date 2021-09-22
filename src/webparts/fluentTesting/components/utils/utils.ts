@@ -1,15 +1,35 @@
+import { IComponentStyles } from "@uifabric/foundation";
+
 export const stylesDanger = {
   root: [
     {
-      background: "red",
+      background: "#f12e2e59",
       selectors: {
         ':hover': {
-          background: "green",
+        },
+        ':disabled': {
+          background: "#f74545bd",
         },
       }
     }
   ]
 };
+
+const styles = props => ({
+  root: [
+    {
+      background: props.theme.palette.themePrimary,
+      selectors: {
+        ':hover': {
+          background: props.theme.palette.themeSecondary,
+        }
+      }
+    },
+    props.isExpanded
+      ? { display: 'block' }
+      : { display: 'none' }
+  ]
+});
 
 // mini id geerator
 function getRandomInt(max: number): number {

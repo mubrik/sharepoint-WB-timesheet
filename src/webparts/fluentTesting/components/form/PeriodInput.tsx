@@ -81,13 +81,13 @@ const PeriodInput: React.FunctionComponent<IProps> = (props:IProps) => {
       />
       <Dropdown
         selectedKey={props.week ? props.week.key : undefined}
-        label="Select Week Period"
+        label="Select a Period"
         options={genWeekNumbers()}
         onChange={handleWeekChange}
       />
       <StackItem align={"end"}>
         <PrimaryButton
-          text={"select"}
+          text={"Select"}
           onClick={handleDateSelected}
           disabled={(props.year === null || props.week === null)}
         />

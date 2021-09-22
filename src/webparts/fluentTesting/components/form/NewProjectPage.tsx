@@ -123,7 +123,7 @@ const NewProjectPage: React.FunctionComponent<IProps> = (props: IProps) => {
             {selectedDates ? 
             `${selectedDates[0].toLocaleString('en-GB', {year: "numeric", weekday: "long", month: "long", day: "numeric"})} to 
             ${selectedDates[6].toLocaleString('en-GB', {year: "numeric", weekday: "long", month: "long", day: "numeric"})}` :
-            "Select A Date"
+            ""
             }
           </Label>
         </StackItem>

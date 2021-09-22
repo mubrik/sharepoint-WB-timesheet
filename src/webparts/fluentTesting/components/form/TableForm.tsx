@@ -185,7 +185,7 @@ export interface ITableControlProps {
 const TableControls: React.FunctionComponent<ITableControlProps> = (props:ITableControlProps) => {
 
   // row number state
-  const [rowNum, setRowNum] = React.useState(0);
+  const [rowNum, setRowNum] = React.useState(1);
 
   const handleRowNum = React.useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -223,6 +223,7 @@ const TableControls: React.FunctionComponent<ITableControlProps> = (props:ITable
         <input
           type="number"
           onChange={handleRowNum}
+          value={rowNum}
           max={20}
           min={0}
         />
@@ -230,7 +231,7 @@ const TableControls: React.FunctionComponent<ITableControlProps> = (props:ITable
           text="Add Rows"
           onClick={handleAddRowClick}
         />
-        <DefaultButton
+        <PrimaryButton
           text="Remove Selected Rows"
           onClick={removeRowClick}
           disabled={(props.rowState.length === 0)}
