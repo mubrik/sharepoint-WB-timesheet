@@ -69,7 +69,7 @@ const DraftPage: React.FunctionComponent<IDraftProps> = (props:IDraftProps) => {
   // context
   const storeData: IState = React.useContext(StoreData);
   const storeDispatch = React.useContext(StoreDispatch);
-  console.log(storeData);
+  console.log("draft theme ", theme);
 
   // controlled states
   const [year, setYear] = React.useState<null | IDropdownOption>(null);

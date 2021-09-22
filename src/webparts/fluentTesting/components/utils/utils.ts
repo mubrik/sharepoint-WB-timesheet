@@ -76,4 +76,27 @@ function weekToDate(year: number, week: number, weekDay = 1): Date {
   return new Date(year, 0, days);
 };
 
-export {getRandomInt, delay, weekToDate};
+/**
+* get date by week number
+* @param  {number} value - value to get time details from
+*     
+*/
+const valueToSeconds = (value: string):number[] => {
+
+  console.log(`value to sec: ${value}`);
+  
+  // if 0
+  if (value === "0") {
+    return [0, 0, 0]
+  };
+
+  // change value to string and split
+  let [_hours, _minutes] = value.split(".");
+
+  let _hoursInSec = Number(_hours) * 3600;
+  let _minInSec = Number(_minutes) * 10 * 60;
+
+  return [_hoursInSec, _minInSec, _hoursInSec+_minInSec];
+};
+
+export {getRandomInt, delay, weekToDate, valueToSeconds};

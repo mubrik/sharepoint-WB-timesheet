@@ -131,11 +131,13 @@ const MainPage: React.FunctionComponent<IMainProps> = (props:IMainProps) => {
       white: '#ffffff',
     },
     semanticColors: {
-      bodyBackground: isDark ? "#000000" : "#ffffff",
+      bodyBackground: isDark ? "#000000" : "#c8c8c8",
       bodyText: isDark ? "#ffffff" : "#000000",
-      /* disabledBackground: "#595959" */
+      bodyDivider: "#58357f"
     },
   });
+
+  console.log( "main theme", myTheme)
 
   return(
     <ThemeProvider theme={myTheme}>

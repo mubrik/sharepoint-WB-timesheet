@@ -1,9 +1,9 @@
 import * as React from 'react';
 // UI
-import { PrimaryButton, Stack, StackItem, DefaultButton} from 'office-ui-fabric-react';
+import { PrimaryButton, Stack, StackItem, DefaultButton, Label} from 'office-ui-fabric-react';
 import {stylesDanger} from "../utils/utils";
 // grid imports
-import { GridReadyEvent, GridApi, ColumnApi, AllCommunityModules, RowSelectedEvent} from "@ag-grid-community/all-modules";
+import { GridReadyEvent, GridApi, ColumnApi, AllCommunityModules, RowSelectedEvent, CellValueChangedEvent} from "@ag-grid-community/all-modules";
 import { AgGridReact, AgGridColumn} from "@ag-grid-community/react";
 import { useMediaQuery } from 'react-responsive';
 import "ag-grid-enterprise";
@@ -20,12 +20,16 @@ import { IUserWeek, IUserWeekData  } from '../sampleData';
 import TimeEditor from './customCellEditor';
 // hooks
 import {useGetDatesHook} from "../utils/reactHooks";
+// utils
+import {valueToSeconds} from "../utils/utils";
 
 export interface IProps {
   dateObj?: Date;
-  id?: string
+  id?: string;
   setDataApi?: React.Dispatch<React.SetStateAction<GridApi|null>>;
-  editData?: IUserWeek
+  editData?: IUserWeek;
+  timeHours?: string;
+  setTimeHours?: React.Dispatch<React.SetStateAction<string>>
 }
 
 const TableForm: React.FunctionComponent<IProps> = (props: IProps)  => {
@@ -46,10 +50,14 @@ const TableForm: React.FunctionComponent<IProps> = (props: IProps)  => {
   const [gridColumnApi, setGridColumnApi] = React.useState<null | ColumnApi>(null);
   // track row selection
   const [rowSelected, setRowSelected] = React.useState<number[]>([]);
+  // total time
+  /* const [timeHours, setTimeHours] = React.useState<string>("0"); */
   // date list hook
   const selectedDates = useGetDatesHook(props.dateObj);
   // data
   const [formData, setFormData] = React.useState<IUserWeekData[]|[]>(tableData);
+  // just a list
+  const weekDays = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
 
   // exposes grid api
   const handleGridReady = (event:GridReadyEvent) => {
@@ -71,6 +79,45 @@ const TableForm: React.FunctionComponent<IProps> = (props: IProps)  => {
       })
     }
   };
+  // check box 
+  const checkboxSelection = function (params) {
+    return params.columnApi.getRowGroupColumns().length === 0;
+  };
+  const headerCheckboxSelection = function (params) {
+    return params.columnApi.getRowGroupColumns().length === 0;
+  };
+  // handle processing when cell value changes
+  const handleCellValueChanged = (event: CellValueChangedEvent) => {
+    // get column of  change
+    let column = event.column.getId();
+    // calculate time if a weekday col
+    if (weekDays.includes(column)) {
+      calculateTotalTime();
+    }
+  };
+
+  const calculateTotalTime = () => {
+
+    // total
+    let totalTime = 0;
+
+    gridApi.forEachNode((rowNode, index) => {
+      // get row data
+      let rowdata = {...rowNode.data}
+      console.log(rowdata);
+
+      Object.keys(rowdata).forEach(colName => {
+        if (weekDays.includes(colName)) {
+          console.log(colName)
+          let [hours, minutes, total] = valueToSeconds(rowdata[colName]);
+          totalTime += total;
+        }
+      })
+    })
+
+    props.setTimeHours(Number(totalTime/3600).toFixed(1));
+  }
+
 
   // col props
   const timeColProps = {
@@ -100,14 +147,7 @@ const TableForm: React.FunctionComponent<IProps> = (props: IProps)  => {
     return ["copy", "paste"]
   }
 
-  // check box 
-  const checkboxSelection = function (params) {
-    return params.columnApi.getRowGroupColumns().length === 0;
-  };
-  const headerCheckboxSelection = function (params) {
-    return params.columnApi.getRowGroupColumns().length === 0;
-  };
-
+  
   return (
     <Stack tokens={{ childrenGap: 7 }}>
       <div>
@@ -122,6 +162,9 @@ const TableForm: React.FunctionComponent<IProps> = (props: IProps)  => {
           column={gridColumnApi}
           rowState={rowSelected}
         />
+        <Label>
+          Hours spent : {props.timeHours}
+        </Label>
       </StackItem>
       <StackItem align="stretch">
         <div className="ag-theme-alpine" style={{height: 500, width: "100%"}}>
@@ -136,6 +179,7 @@ const TableForm: React.FunctionComponent<IProps> = (props: IProps)  => {
               "timeEditor" : TimeEditor
             }}
             onRowSelected={handleselectionChange}
+            onCellValueChanged={handleCellValueChanged}
             >
             <AgGridColumn
               field="Project"

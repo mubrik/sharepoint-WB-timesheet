@@ -37,6 +37,10 @@ const NewProjectPage: React.FunctionComponent<IProps> = (props: IProps) => {
   const selectedDates = useGetDatesHook(props.dateObj);
   // grid api/mobile data store to control saving data
   const [gridApi, setGridApi] = React.useState<null | GridApi>(null);
+  // total time
+  const [timeHours, setTimeHours] = React.useState<string>("0");
+  // validation state
+  const [validState, setValidState] = React.useState({state: false, msg: ""});
 
   React.useEffect(() => {
     // logic to determine draft availabale, dumb logic for now
@@ -49,6 +53,42 @@ const NewProjectPage: React.FunctionComponent<IProps> = (props: IProps) => {
       }
     };
   }, [year, week])
+
+  // validation checker, will add more stuff to check as requested
+  React.useEffect(() => {
+    // if period not selected
+    if (year === null || week === null) {
+      setValidState((oldState) => {
+        return {
+          ...oldState,
+          state: false,
+          msg: "Select a Time period"
+        }
+      });
+
+      return;
+    }
+    // if time over value
+    if (Number(timeHours) > 72) {
+
+      setValidState((oldState) => {
+        return {
+          state: false,
+          msg: "Hours cant be over 72"
+        }
+      });
+
+      return;
+    }
+    // default
+    setValidState((oldState) => {
+      return {
+        ...oldState,
+        state: true,
+        msg: ""
+      }
+    });
+  }, [timeHours, year, week]);
 
   // handle save clicked
   const handleSaveClick = () => {
@@ -138,10 +178,15 @@ const NewProjectPage: React.FunctionComponent<IProps> = (props: IProps) => {
           <TableForm
             dateObj={props.dateObj}
             setDataApi={setGridApi}
+            timeHours={timeHours}
+            setTimeHours={setTimeHours}
           />
         </StackItem>
         <StackItem align={"start"}>
-          <PrimaryButton text={"Save Sheet"} onClick={handleSaveClick} disabled={(year === null || week === null)}/>
+          <PrimaryButton text={"Save Sheet"} onClick={handleSaveClick} disabled={!validState.state}/>
+          <Label>
+            {validState.msg}
+          </Label>
         </StackItem>
       </Stack>
       </>

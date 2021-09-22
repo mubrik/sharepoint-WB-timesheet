@@ -1,4 +1,6 @@
 import * as React from 'react';
+// utils
+import {valueToSeconds} from "../utils/utils";
 
 interface IEditorProps extends React.ComponentPropsWithoutRef<any> {
   children?: React.ReactNode;
@@ -6,7 +8,10 @@ interface IEditorProps extends React.ComponentPropsWithoutRef<any> {
 
 const TimeEditor = React.forwardRef((props: IEditorProps, ref) => {
 
-  const [value, setValue] = React.useState(parseFloat(props.value));
+  // check for prop value
+  let timeVal = props.value ? parseFloat(props.value).toFixed(1) : "0";
+
+  const [value, setValue] = React.useState<string>(timeVal);
   const refInput = React.useRef(null);
 
   React.useEffect(() => {
@@ -33,20 +38,30 @@ const TimeEditor = React.forwardRef((props: IEditorProps, ref) => {
           isCancelAfterEnd() {
             // our editor will reject any value greater than 1000
             /* return value > 24; */
-            return value > 24;
+            return false;
           }
       };
   });
 
-  const parseValue = (value:string):number => {
-    return Number(parseFloat(value).toFixed(2));
+  const parseValue = (value:string):string => {
+    if (!value) return "0";
+
+    if (Number.isNaN(Number.parseFloat(value))) {
+      return "0";
+    }
+
+    let [hours, minutes, total] = valueToSeconds(value);
+    // hours shouldnt exxceed day
+    if (hours > 86000) {return "24.0"}
+
+    return parseFloat(value).toFixed(1);
   };
 
   return (
       <input type="number"
-        min={0.0}
-        max={24.0}
-        step={0.1}
+        min={0}
+        max={24}
+        /* step={0.1} */
         placeholder="H.M"
         ref={refInput}
         value={value}
