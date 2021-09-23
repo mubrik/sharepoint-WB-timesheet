@@ -11,7 +11,7 @@ import {
 } from "@ag-grid-community/all-modules";
 import { AgGridReact, AgGridColumn} from "@ag-grid-community/react";
 import { useMediaQuery } from 'react-responsive';
-import "ag-grid-enterprise";
+/* import "ag-grid-enterprise"; */
 import "@ag-grid-community/client-side-row-model";
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-alpine.css';
@@ -26,7 +26,7 @@ import TimeEditor, {timeValueFormatter} from './customCellEditor';
 // hooks
 import {useGetDatesHook} from "../utils/reactHooks";
 // utils
-import {valueToSeconds} from "../utils/utils";
+import {valueToSeconds, objHasProperty} from "../utils/utils";
 
 export interface IProps {
   dateObj?: Date;
@@ -35,6 +35,8 @@ export interface IProps {
   editData?: IUserWeek;
   timeHours: string;
   setTimeHours: React.Dispatch<React.SetStateAction<string>>
+  tableState?: {};
+  setTableState?:React.Dispatch<React.SetStateAction<{}>>
 }
 
 const TableForm: React.FunctionComponent<IProps> = (props: IProps)  => {
@@ -60,19 +62,32 @@ const TableForm: React.FunctionComponent<IProps> = (props: IProps)  => {
   // just a list
   const weekDays = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
 
-  // use effect for effects
+  // use effect for effects lol
   React.useEffect(() => {
     // if page is edit, calculate time. checking grid api to only run after table loads
     if (gridApi && formData) {
       calculateTotalTime();
     }
   },[gridApi])
+  
+  // check box 
+  const checkboxSelection = function (params) {
+    return params.columnApi.getRowGroupColumns().length === 0;
+  };
+  const headerCheckboxSelection = function (params) {
+    return params.columnApi.getRowGroupColumns().length === 0;
+  };
+  // event handlers
+  // handle processing when cell value changes
+  const handleCellValueChanged = (event: CellValueChangedEvent) => {
+    // get column of  change
+    let column = event.column.getId();
+    // calculate time if a weekday col
+    if (weekDays.includes(column)) {
+      calculateTotalTime();
+    }
 
-  // exposes grid api on grid ready event
-  const handleGridReady = (event:GridReadyEvent) => {
-    setGridApi(event.api);
-    props.setDataApi(event.api);
-    setGridColumnApi(event.columnApi);
+    validateDataEntries();
   };
   // handle rowselected state
   const handleselectionChange = (param: RowSelectedEvent) => {
@@ -88,27 +103,38 @@ const TableForm: React.FunctionComponent<IProps> = (props: IProps)  => {
       })
     }
   };
-  // check box 
-  const checkboxSelection = function (params) {
-    return params.columnApi.getRowGroupColumns().length === 0;
-  };
-  const headerCheckboxSelection = function (params) {
-    return params.columnApi.getRowGroupColumns().length === 0;
-  };
-  // handle processing when cell value changes
-  const handleCellValueChanged = (event: CellValueChangedEvent) => {
-    // get column of  change
-    let column = event.column.getId();
-    // calculate time if a weekday col
-    if (weekDays.includes(column)) {
-      calculateTotalTime();
-    }
-  };
   // when a row is removed
   const handleRowRemoved = (event: VirtualRowRemovedEvent) => {
     // recalculate time, make this single line later
     calculateTotalTime();
-  }
+    // check data
+    validateDataEntries();
+  };
+  // exposes grid api on grid ready event
+  const handleGridReady = (event:GridReadyEvent) => {
+    setGridApi(event.api);
+    props.setDataApi(event.api);
+    setGridColumnApi(event.columnApi);
+    // if not edit data disable until row added
+    if (formData.length === 0) {
+      props.setTableState((oldState) => {
+        return {
+          ...oldState,
+          state: false,
+          msg: "Add a row"
+        }
+      });
+    } else {
+      props.setTableState((oldState) => {
+        return {
+          ...oldState,
+          state: true,
+          msg: ""
+        }
+      });
+    }
+  };
+
   // utils
   // calculate  total time in time cells
   const calculateTotalTime = () => {
@@ -129,22 +155,76 @@ const TableForm: React.FunctionComponent<IProps> = (props: IProps)  => {
     });
 
     props.setTimeHours(Number(totalTime/3600).toFixed(1));
-  }
+  };
+  // validate data in table
+  const validateDataEntries = ():boolean => {
+    const arrToValidate = ["Project", "Task"];
+    let isValid = true;
 
+    let rowsNumber = gridApi.getDisplayedRowCount();
+
+    if (rowsNumber === 0 || rowsNumber === null) {
+      props.setTableState((oldState) => {
+        return {
+          ...oldState,
+          state: false,
+          msg: "Add a row"
+        }
+      });
+
+      return;
+    };
+
+    gridApi.forEachNode((rowNode, index) => {
+
+      if (!isValid) return;
+      // get row data
+      let rowdata = {...rowNode.data};
+      // row id
+      let rowId = index;
+      // check validity
+      let [valid, response] = objHasProperty(arrToValidate, rowdata);
+
+      if (!valid) {
+        props.setTableState((oldState) => {
+          return {
+            ...oldState,
+            state: false,
+            msg: response + ` at row ${rowId + 1}`
+          }
+        });
+        isValid = false;
+        return isValid;
+
+      } else {
+        props.setTableState((oldState) => {
+          return {
+            ...oldState,
+            state: true,
+            msg: ""
+          }
+        });
+        isValid = true;
+        return isValid;
+      }
+    });
+
+    return isValid;
+  };
 
   // col props
   const timeColProps = {
     width: (smTab && 50) || (mdTab && 52) || (lgTab && 64) || (xlgTab && 90),
     resizable: true,
-  }
+  };
   const highPriorityDetailProps = {
     minWidth: (smTab && 74) || (mdTab && 110) || (lgTab && 124) || (xlgTab && 134),
     resizable: true,
-  }
+  };
   const lowPriorityDetailProps = {
     width: (smTab && 52) || (mdTab && 90) || (lgTab && 100) || (xlgTab && 110),
     resizable: true,
-  } 
+  };
   // format date column labels
   const formatLabel = (day: string, index: number):string => {
     // if date is null for some reason
@@ -154,12 +234,6 @@ const TableForm: React.FunctionComponent<IProps> = (props: IProps)  => {
 
     return `${day}-${selectedDates[index].toLocaleDateString()}`
   };
-  
-  // context menu
-  const getContextMenuItems = () => {
-    return ["copy", "paste"]
-  }
-
   
   return (
     <Stack tokens={{ childrenGap: 7 }}>
@@ -184,13 +258,12 @@ const TableForm: React.FunctionComponent<IProps> = (props: IProps)  => {
           <AgGridReact
             rowData={formData}
             rowSelection="multiple"
-            onGridReady={handleGridReady}
-            getContextMenuItems={getContextMenuItems}
             modules={AllCommunityModules}
             enableRangeSelection={true}
             frameworkComponents={{
               "timeEditor" : TimeEditor
             }}
+            onGridReady={handleGridReady}
             onRowSelected={handleselectionChange}
             onCellValueChanged={handleCellValueChanged}
             onVirtualRowRemoved={handleRowRemoved}

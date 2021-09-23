@@ -1,4 +1,5 @@
 import { IComponentStyles } from "@uifabric/foundation";
+import { forEach } from "lodash";
 
 export const stylesDanger = {
   root: [
@@ -83,8 +84,6 @@ function weekToDate(year: number, week: number, weekDay = 1): Date {
 *     
 */
 const valueToSeconds = (value:number):number => {
-
-  console.log(`value to sec: ${value}`);
   
   // if 0
   if (value === 0) {
@@ -107,4 +106,21 @@ const valueToSeconds = (value:number):number => {
   };
 };
 
-export {getRandomInt, delay, weekToDate, valueToSeconds};
+const objHasProperty = (list: string[], rowData: object): [boolean, string] => {
+
+  let _valid = true;
+  let _msg = "";
+  // iterate cols
+  for (const columnIndex in list) {
+    
+    if (!(list[columnIndex] in rowData)) {
+      _valid = false;
+      _msg = `${list[columnIndex]} is missing`;
+      break;
+    }
+  };
+
+  return [_valid, _msg];
+};
+
+export {getRandomInt, delay, weekToDate, valueToSeconds, objHasProperty};

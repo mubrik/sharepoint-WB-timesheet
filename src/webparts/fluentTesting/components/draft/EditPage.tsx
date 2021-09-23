@@ -13,7 +13,7 @@ import { GridApi} from "@ag-grid-community/all-modules";
 //types
 import { IUserWeek, IUserWeekData } from '../sampleData';
 // utiliity
-import {delay, weekToDate} from "../utils/utils";
+import {delay, weekToDate, objHasProperty} from "../utils/utils";
 import {useGetDatesHook} from "../utils/reactHooks";
 
 interface IProps {
@@ -34,6 +34,7 @@ const EditPage:React.FunctionComponent<IProps> = (props:IProps) => {
   const [timeHours, setTimeHours] = React.useState<string>("0");
   // validation state
   const [validState, setValidState] = React.useState({state: false, msg: ""});
+  const [tableState, setTableState] = React.useState({state: false, msg: ""});
   // button loading and feedback
   const [isLoading, setIsLoading] = React.useState(false);
   const [notification, setNotification] = React.useState(false);
@@ -79,6 +80,19 @@ const EditPage:React.FunctionComponent<IProps> = (props:IProps) => {
 
       return;
     }
+
+    // form validation
+    if (!tableState.state) {
+      setValidState((oldState) => {
+        return {
+          state: false,
+          msg: tableState.msg
+        }
+      });
+
+      return;
+    }
+
     // default
     setValidState((oldState) => {
       return {
@@ -87,7 +101,7 @@ const EditPage:React.FunctionComponent<IProps> = (props:IProps) => {
         msg: ""
       }
     });
-  }, [timeHours, year, week]);
+  }, [timeHours, tableState]);
   
 
   // handle save clicked
@@ -143,16 +157,6 @@ const EditPage:React.FunctionComponent<IProps> = (props:IProps) => {
   return(
     <Stack tokens={{ childrenGap: 10, padding: 8 }}>
       <StackItem>
-        {notification && 
-          <MessageBar
-            messageBarType={MessageBarType.success}
-            onDismiss={(e) => console.log(e)}
-            isMultiline={false}
-            dismissButtonAriaLabel={"close"}
-          >
-            Sheet Updated Successfully
-          </MessageBar>
-        }
         <PrimaryButton text={"Back"} onClick={handleBackClicked} styles={stylesDanger}/>
         <Label>
           {selectedDays ? 
@@ -169,13 +173,28 @@ const EditPage:React.FunctionComponent<IProps> = (props:IProps) => {
           dateObj={weekToDate(year, week)}
           timeHours={timeHours}
           setTimeHours={setTimeHours}
+          tableState={tableState}
+          setTableState={setTableState}
         />
       </StackItem>
       <StackItem>
         {isLoading &&
           <ProgressIndicator label={"Updating Sheet"}/>
         }
+        {notification && 
+          <MessageBar
+            messageBarType={MessageBarType.success}
+            onDismiss={(e) => console.log(e)}
+            isMultiline={false}
+            dismissButtonAriaLabel={"close"}
+          >
+            Sheet Updated Successfully
+          </MessageBar>
+        }
         <PrimaryButton text={"Update Draft"} onClick={handleSaveClick} disabled={!validState.state || isLoading}/>
+        <Label>
+          {validState.msg}
+        </Label>
       </StackItem>
     </Stack>
   )

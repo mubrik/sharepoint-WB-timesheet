@@ -4,7 +4,8 @@ import {StoreDispatch, StoreData, IState} from "../FluentTesting";
 // UI
 import {Label, Stack, StackItem,
   PrimaryButton, IDropdownOption,
-  ProgressIndicator
+  ProgressIndicator, MessageBar,
+  MessageBarType,
   } from 'office-ui-fabric-react';
 import { GridApi} from "@ag-grid-community/all-modules";
 // forms
@@ -16,7 +17,7 @@ import { IUserWeekData, IUserWeek} from "../sampleData";
 // hooks
 import {useGetDatesHook} from "../utils/reactHooks";
 // utiliity
-import {delay, getRandomInt} from "../utils/utils";
+import {delay, getRandomInt, objHasProperty} from "../utils/utils";
 
 //type
 export interface IProps {
@@ -43,8 +44,10 @@ const NewProjectPage: React.FunctionComponent<IProps> = (props: IProps) => {
   const [timeHours, setTimeHours] = React.useState<string>("0");
   // validation state
   const [validState, setValidState] = React.useState({state: false, msg: ""});
+  const [tableState, setTableState] = React.useState({state: false, msg: ""});
   // button loading
   const [isLoading, setIsLoading] = React.useState(false);
+  const [notification, setNotification] = React.useState(false);
 
   React.useEffect(() => {
     // logic to determine draft availabale, dumb logic for now
@@ -84,6 +87,18 @@ const NewProjectPage: React.FunctionComponent<IProps> = (props: IProps) => {
 
       return;
     }
+    // form validation
+    if (!tableState.state) {
+      setValidState((oldState) => {
+        return {
+          state: false,
+          msg: tableState.msg
+        }
+      });
+
+      return;
+    }
+    
     // default
     setValidState((oldState) => {
       return {
@@ -92,7 +107,7 @@ const NewProjectPage: React.FunctionComponent<IProps> = (props: IProps) => {
         msg: ""
       }
     });
-  }, [timeHours, year, week]);
+  }, [timeHours, year, week, tableState]);
 
   // handle save clicked
   const handleSaveClick = () => {
@@ -145,6 +160,7 @@ const NewProjectPage: React.FunctionComponent<IProps> = (props: IProps) => {
 
       // button state
       setIsLoading(false);
+      setNotification(true);
     });
 
   };
@@ -153,6 +169,34 @@ const NewProjectPage: React.FunctionComponent<IProps> = (props: IProps) => {
     // set page state
     setPageState("editDraft");
   };
+
+  /* // utils
+  const validateDataEntries = ():boolean => {
+    const arrToValidate = ["Project", "Task"];
+    let isValid = true;
+
+    gridApi.forEachNode((rowNode, index) => {
+      // get row data
+      let rowdata = {...rowNode.data};
+      // row id
+      let rowId = index;
+      // check validity
+      let [valid, response] = objHasProperty(arrToValidate, rowdata);
+
+      if (!valid) {
+        setValidState((oldState) => {
+          return {
+            ...oldState,
+            state: false,
+            msg: response + ` at row ${rowId + 1}`
+          }
+        });
+        isValid = false;
+      };
+    })
+
+    return isValid;
+  }; */
 
   return(
     <>
@@ -190,11 +234,23 @@ const NewProjectPage: React.FunctionComponent<IProps> = (props: IProps) => {
             setDataApi={setGridApi}
             timeHours={timeHours}
             setTimeHours={setTimeHours}
+            tableState={tableState}
+            setTableState={setTableState}
           />
         </StackItem>
         <StackItem align={"start"}>
           {isLoading &&
             <ProgressIndicator label={"Creating Sheet"}/>
+          }
+          {notification && 
+            <MessageBar
+              messageBarType={MessageBarType.success}
+              onDismiss={(e) => console.log(e)}
+              isMultiline={false}
+              dismissButtonAriaLabel={"close"}
+            >
+              Sheet Updated Successfully
+            </MessageBar>
           }
           <PrimaryButton text={"Save Sheet"} onClick={handleSaveClick} disabled={!validState.state || isLoading}/>
           <Label>

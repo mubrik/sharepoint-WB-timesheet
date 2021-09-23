@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Stack, Pivot, PivotItem } from 'office-ui-fabric-react';
+import { Stack, Pivot, PivotItem, getTheme, ITheme } from 'office-ui-fabric-react';
 
 export interface IProps {
   pageState: string;
@@ -7,6 +7,9 @@ export interface IProps {
 }
 
 export const NavBar: React.FunctionComponent<IProps> = (props:IProps) => {
+
+  const theme: ITheme = getTheme();
+  console.log("nav theme ", theme);
 
     return(
         <Stack>

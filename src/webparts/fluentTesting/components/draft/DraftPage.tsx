@@ -4,13 +4,13 @@ import {StoreDispatch, StoreData, IState} from "../FluentTesting";
 // UI
 import { StackItem, Stack, 
   Dropdown, IDropdownOption,
-  Spinner, Label
+  Spinner
 } from 'office-ui-fabric-react';
 import { Icon, FocusZone, FocusZoneDirection, TextField, List } from 'office-ui-fabric-react';
 import { ITheme, mergeStyleSets, getTheme, getFocusStyle } from 'office-ui-fabric-react';
 import EditPage from './EditPage';
 // sample data types
-import { IUserWeekData, IUserWeek, IUserWeeks, IUserYear } from '../sampleData';
+import { IUserWeek, IUserWeeks, IUserYear } from '../sampleData';
 // theming
 const theme: ITheme = getTheme();
 const { palette, semanticColors, fonts } = theme;

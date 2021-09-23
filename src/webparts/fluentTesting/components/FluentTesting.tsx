@@ -146,7 +146,7 @@ const MainPage: React.FunctionComponent<IMainProps> = (props:IMainProps) => {
         <StoreData.Provider value={data}>
             <Stack horizontal>
               <NavBar pageState={pageState} setPageState={setPageState}/>
-              <IconButton iconProps={{ iconName: 'ToggleLeft' }} title="Dark Mode" aria-label={"toggle"} onClick={() => {setIsDark(old => !old)}}/>
+              {/* <IconButton iconProps={{ iconName: 'ToggleLeft' }} title="Dark Mode" aria-label={"toggle"} onClick={() => {setIsDark(old => !old)}}/> */}
             </Stack>
             <Stack>
               {pageState === "new" &&
