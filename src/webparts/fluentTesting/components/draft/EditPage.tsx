@@ -2,8 +2,12 @@ import * as React from 'react';
 // react context
 import {StoreDispatch} from "../FluentTesting";
 // ui
-import { PrimaryButton, Stack, StackItem, Label } from 'office-ui-fabric-react';
+import { PrimaryButton, Stack, StackItem,
+  Label, ProgressIndicator, MessageBar,
+  MessageBarType,
+ } from 'office-ui-fabric-react';
 import TableForm from '../form/TableForm';
+import {stylesDanger} from "../utils/utils";
 // gridtable
 import { GridApi} from "@ag-grid-community/all-modules";
 //types
@@ -22,20 +26,78 @@ const EditPage:React.FunctionComponent<IProps> = (props:IProps) => {
   const dispatchStore = React.useContext(StoreDispatch);
   // grid api/mobile data store to control saving data
   const [gridApi, setGridApi] = React.useState<null | GridApi>(null);
+  // controlled states, lifted up from period input
+  const [year, setYear] = React.useState<null | number>(null);
+  const [week, setWeek] = React.useState<null | number>(null);
+  const [selectedDays, setSelectedDays] = React.useState<null | Date[]>(null);
+  // total time
+  const [timeHours, setTimeHours] = React.useState<string>("0");
+  // validation state
+  const [validState, setValidState] = React.useState({state: false, msg: ""});
+  // button loading and feedback
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [notification, setNotification] = React.useState(false);
 
-  // prepare data
-  let _week = props.editData.week;
-  let _year = props.editData.year;
+  // use effect for prepping time data
+  React.useEffect(() => {
+    let _week = props.editData.week;
+    let _year = props.editData.year;
 
-  // get date obj
-  let _newDate = weekToDate(_year, _week);
-  let selectedDates = useGetDatesHook(_newDate);
+    // prepare data
+    setWeek(_week);
+    setYear(_year);
+    // get date
+    let _newDate = weekToDate(_year, _week);
+    // list of days
+    setSelectedDays(useGetDatesHook(_newDate));
+
+  },[]);
+
+  // validation checker, will add more stuff to check as requested
+  React.useEffect(() => {
+    // if period not selected
+    if (year === null || week === null) {
+      setValidState((oldState) => {
+        return {
+          ...oldState,
+          state: false,
+          msg: "Select a Time period"
+        }
+      });
+
+      return;
+    }
+    // if time over value
+    if (Number(timeHours) > 72) {
+
+      setValidState((oldState) => {
+        return {
+          state: false,
+          msg: "Hours cant be over 72"
+        }
+      });
+
+      return;
+    }
+    // default
+    setValidState((oldState) => {
+      return {
+        ...oldState,
+        state: true,
+        msg: ""
+      }
+    });
+  }, [timeHours, year, week]);
+  
 
   // handle save clicked
   const handleSaveClick = () => {
   
     // data valid
-    if (_year === null || _week === null) return;
+    if (year === null || week === null) return;
+
+    // button loading state
+    setIsLoading(true);
 
     let _weekData: IUserWeekData[] = [];
 
@@ -48,8 +110,8 @@ const EditPage:React.FunctionComponent<IProps> = (props:IProps) => {
 
     // data
     let _postData: IUserWeek = {
-      week: _week,
-      year: _year,
+      week: week,
+      year: year,
       data: _weekData,
       status: "draft"
     };
@@ -63,7 +125,10 @@ const EditPage:React.FunctionComponent<IProps> = (props:IProps) => {
         type: "updateWeek",
         payload:{data: result}
       })
-    })
+      // button and notification
+      setIsLoading(false);
+      setNotification(true);
+    });
   };
 
   const handleBackClicked = () => {
@@ -78,11 +143,21 @@ const EditPage:React.FunctionComponent<IProps> = (props:IProps) => {
   return(
     <Stack tokens={{ childrenGap: 10, padding: 8 }}>
       <StackItem>
-        <PrimaryButton text={"Back"} onClick={handleBackClicked}/>
+        {notification && 
+          <MessageBar
+            messageBarType={MessageBarType.success}
+            onDismiss={(e) => console.log(e)}
+            isMultiline={false}
+            dismissButtonAriaLabel={"close"}
+          >
+            Sheet Updated Successfully
+          </MessageBar>
+        }
+        <PrimaryButton text={"Back"} onClick={handleBackClicked} styles={stylesDanger}/>
         <Label>
-          {selectedDates ? 
-          `${selectedDates[0].toLocaleString('en-GB', {year: "numeric", weekday: "long", month: "long", day: "numeric"})} to 
-          ${selectedDates[6].toLocaleString('en-GB', {year: "numeric", weekday: "long", month: "long", day: "numeric"})}` :
+          {selectedDays ? 
+          `${selectedDays[0].toLocaleString('en-GB', {year: "numeric", weekday: "long", month: "long", day: "numeric"})} to 
+          ${selectedDays[6].toLocaleString('en-GB', {year: "numeric", weekday: "long", month: "long", day: "numeric"})}` :
           "Select A Date"
           }
         </Label>
@@ -91,11 +166,16 @@ const EditPage:React.FunctionComponent<IProps> = (props:IProps) => {
         <TableForm
           editData={props.editData}
           setDataApi={setGridApi}
-          dateObj={_newDate}
+          dateObj={weekToDate(year, week)}
+          timeHours={timeHours}
+          setTimeHours={setTimeHours}
         />
       </StackItem>
       <StackItem>
-        <PrimaryButton text={"Update Draft"} onClick={handleSaveClick} disabled={(_year === null || _week === null)}/>
+        {isLoading &&
+          <ProgressIndicator label={"Updating Sheet"}/>
+        }
+        <PrimaryButton text={"Update Draft"} onClick={handleSaveClick} disabled={!validState.state || isLoading}/>
       </StackItem>
     </Stack>
   )

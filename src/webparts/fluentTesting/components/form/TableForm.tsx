@@ -3,7 +3,12 @@ import * as React from 'react';
 import { PrimaryButton, Stack, StackItem, DefaultButton, Label} from 'office-ui-fabric-react';
 import {stylesDanger} from "../utils/utils";
 // grid imports
-import { GridReadyEvent, GridApi, ColumnApi, AllCommunityModules, RowSelectedEvent, CellValueChangedEvent} from "@ag-grid-community/all-modules";
+import { 
+  GridReadyEvent, GridApi,
+  ColumnApi, AllCommunityModules, 
+  RowSelectedEvent, CellValueChangedEvent,
+  VirtualRowRemovedEvent,
+} from "@ag-grid-community/all-modules";
 import { AgGridReact, AgGridColumn} from "@ag-grid-community/react";
 import { useMediaQuery } from 'react-responsive';
 import "ag-grid-enterprise";
@@ -28,8 +33,8 @@ export interface IProps {
   id?: string;
   setDataApi?: React.Dispatch<React.SetStateAction<GridApi|null>>;
   editData?: IUserWeek;
-  timeHours?: string;
-  setTimeHours?: React.Dispatch<React.SetStateAction<string>>
+  timeHours: string;
+  setTimeHours: React.Dispatch<React.SetStateAction<string>>
 }
 
 const TableForm: React.FunctionComponent<IProps> = (props: IProps)  => {
@@ -44,22 +49,26 @@ const TableForm: React.FunctionComponent<IProps> = (props: IProps)  => {
 
   // data to be used
   let tableData: IUserWeekData[] = props.editData ? props.editData.data : [];
-
+  const [formData, setFormData] = React.useState<IUserWeekData[]|[]>(tableData);
   // exposing grid and column api
   const [gridApi, setGridApi] = React.useState<null | GridApi>(null);
   const [gridColumnApi, setGridColumnApi] = React.useState<null | ColumnApi>(null);
   // track row selection
   const [rowSelected, setRowSelected] = React.useState<number[]>([]);
-  // total time
-  /* const [timeHours, setTimeHours] = React.useState<string>("0"); */
   // date list hook
   const selectedDates = useGetDatesHook(props.dateObj);
-  // data
-  const [formData, setFormData] = React.useState<IUserWeekData[]|[]>(tableData);
   // just a list
   const weekDays = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
 
-  // exposes grid api
+  // use effect for effects
+  React.useEffect(() => {
+    // if page is edit, calculate time. checking grid api to only run after table loads
+    if (gridApi && formData) {
+      calculateTotalTime();
+    }
+  },[gridApi])
+
+  // exposes grid api on grid ready event
   const handleGridReady = (event:GridReadyEvent) => {
     setGridApi(event.api);
     props.setDataApi(event.api);
@@ -95,7 +104,13 @@ const TableForm: React.FunctionComponent<IProps> = (props: IProps)  => {
       calculateTotalTime();
     }
   };
-
+  // when a row is removed
+  const handleRowRemoved = (event: VirtualRowRemovedEvent) => {
+    // recalculate time, make this single line later
+    calculateTotalTime();
+  }
+  // utils
+  // calculate  total time in time cells
   const calculateTotalTime = () => {
 
     // total
@@ -178,6 +193,7 @@ const TableForm: React.FunctionComponent<IProps> = (props: IProps)  => {
             }}
             onRowSelected={handleselectionChange}
             onCellValueChanged={handleCellValueChanged}
+            onVirtualRowRemoved={handleRowRemoved}
             >
             <AgGridColumn
               field="Project"

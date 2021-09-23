@@ -2,9 +2,11 @@ import * as React from 'react';
 // context
 import {StoreDispatch, StoreData, IState} from "../FluentTesting";
 // UI
-import {Label, Stack, StackItem, PrimaryButton, IDropdownOption} from 'office-ui-fabric-react';
+import {Label, Stack, StackItem,
+  PrimaryButton, IDropdownOption,
+  ProgressIndicator
+  } from 'office-ui-fabric-react';
 import { GridApi} from "@ag-grid-community/all-modules";
-import { useMediaQuery } from 'react-responsive';
 // forms
 import TableForm from './TableForm';
 import PeriodInput from './PeriodInput';
@@ -41,6 +43,8 @@ const NewProjectPage: React.FunctionComponent<IProps> = (props: IProps) => {
   const [timeHours, setTimeHours] = React.useState<string>("0");
   // validation state
   const [validState, setValidState] = React.useState({state: false, msg: ""});
+  // button loading
+  const [isLoading, setIsLoading] = React.useState(false);
 
   React.useEffect(() => {
     // logic to determine draft availabale, dumb logic for now
@@ -93,6 +97,9 @@ const NewProjectPage: React.FunctionComponent<IProps> = (props: IProps) => {
   // handle save clicked
   const handleSaveClick = () => {
     if (year === null || week === null) return;
+    
+    // butoon loading state
+    setIsLoading(true);
 
     // prepare data
     let _week = Number(week.key);
@@ -135,7 +142,10 @@ const NewProjectPage: React.FunctionComponent<IProps> = (props: IProps) => {
         type: "updateWeek",
         payload:{data: result}
       })
-    })
+
+      // button state
+      setIsLoading(false);
+    });
 
   };
 
@@ -183,7 +193,10 @@ const NewProjectPage: React.FunctionComponent<IProps> = (props: IProps) => {
           />
         </StackItem>
         <StackItem align={"start"}>
-          <PrimaryButton text={"Save Sheet"} onClick={handleSaveClick} disabled={!validState.state}/>
+          {isLoading &&
+            <ProgressIndicator label={"Creating Sheet"}/>
+          }
+          <PrimaryButton text={"Save Sheet"} onClick={handleSaveClick} disabled={!validState.state || isLoading}/>
           <Label>
             {validState.msg}
           </Label>

@@ -4,6 +4,7 @@ export const stylesDanger = {
   root: [
     {
       background: "#f12e2ebd",
+      border: "0px solid black",
       selectors: {
         ':hover': {
         },
