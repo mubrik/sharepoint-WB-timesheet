@@ -2,15 +2,20 @@ import * as React from 'react';
 // react context
 import {StoreDispatch, StoreData, IState} from "../FluentTesting";
 // UI
-import { StackItem, Stack, 
+import { Icon, FocusZone,
+  FocusZoneDirection, TextField,
+  List, IColumn, DetailsList,
+  ITheme, mergeStyleSets,
+  getTheme, getFocusStyle,
+  StackItem, Stack, 
   Dropdown, IDropdownOption,
-  Spinner
+  Spinner, SelectionMode, DetailsRow,
+  GroupedList, IGroup
 } from 'office-ui-fabric-react';
-import { Icon, FocusZone, FocusZoneDirection, TextField, List } from 'office-ui-fabric-react';
-import { ITheme, mergeStyleSets, getTheme, getFocusStyle } from 'office-ui-fabric-react';
+// components
 import EditPage from './EditPage';
 // sample data types
-import { IUserWeek, IUserWeeks, IUserYear } from '../sampleData';
+import { IUserWeek, IUserWeeks, IUserYear, draftGroupList } from '../sampleData';
 // theming
 const theme: ITheme = getTheme();
 const { palette, semanticColors, fonts } = theme;
@@ -69,7 +74,6 @@ const DraftPage: React.FunctionComponent<IDraftProps> = (props:IDraftProps) => {
   // context
   const storeData: IState = React.useContext(StoreData);
   const storeDispatch = React.useContext(StoreDispatch);
-  console.log("draft theme ", theme);
 
   // controlled states
   const [year, setYear] = React.useState<null | IDropdownOption>(null);
@@ -78,6 +82,62 @@ const DraftPage: React.FunctionComponent<IDraftProps> = (props:IDraftProps) => {
   // list data, data list should be async set in production
   const [dataList, setDataList] = React.useState<null | IUserWeek[]>(null);
   const [shownItems, setShownItems] = React.useState<null | IUserWeek[]>(null);
+
+  // column for list
+  const columns: IColumn[] = [
+    {
+      key: 'column1',
+      name: 'Year',
+      fieldName: 'Year',
+      minWidth: 210,
+      maxWidth: 350,
+      isRowHeader: true,
+      isResizable: true,
+      data: 'string',
+      onRender: (item: IUserWeek) => {
+        return <span>{item.year}</span>;
+      },
+      isPadded: true,
+    },
+    {
+      key: 'column2',
+      name: 'Week',
+      fieldName: 'Week',
+      minWidth: 210,
+      maxWidth: 350,
+      isRowHeader: true,
+      isResizable: true,
+      data: 'string',
+      onRender: (item: IUserWeek) => {
+        return <span>{item.week}</span>;
+      },
+      isPadded: true,
+    },
+    {
+      key: 'column3',
+      name: 'Status',
+      fieldName: 'Status',
+      minWidth: 70,
+      maxWidth: 90,
+      isResizable: true,
+      data: 'string',
+      onRender: (item: IUserWeek) => {
+        return <span>{item.status}</span>;
+      },
+      isPadded: true,
+    }
+  ]
+
+  // render row in group
+  const onRenderGroupRow = React.useCallback(
+    (nestingDepth?: number, item?: IUserWeek, itemIndex?: number, group?: IGroup): React.ReactNode => {
+      /* console.log(group, item) */
+      return (
+        <div/>
+      )
+    },
+    [columns],
+  );
 
   // set data
   React.useEffect(() => {
@@ -195,6 +255,24 @@ const DraftPage: React.FunctionComponent<IDraftProps> = (props:IDraftProps) => {
           {shownItems && 
           <FocusZone direction={FocusZoneDirection.vertical}>
             <List items={shownItems} onRenderCell={onRenderCell} />
+            <GroupedList
+              items={shownItems}
+              onRenderCell={onRenderGroupRow}
+              groups={draftGroupList}
+            />
+            {/* <DetailsList
+              items={shownItems}
+              columns={columns}
+              isHeaderVisible={true}
+              selectionMode={SelectionMode.none}
+              onRenderRow={(props) => {
+                console.log(props);
+                return (
+                <div className={classNames.itemCell} onClick={() => handleListItemClick(props.item)}>
+                  <DetailsRow {...props}/>
+                </div>)
+              }}
+            /> */}
           </FocusZone>
           }
 

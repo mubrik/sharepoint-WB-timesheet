@@ -62,6 +62,8 @@ const myReducer = (state:IState, action:IAction): IState => {
 // context for pass down store dispatch
 export const StoreDispatch = React.createContext(null);
 export const StoreData = React.createContext(null);
+export const DateContext = React.createContext(null);
+export const DateDispatch = React.createContext(null);
 
 // main page for webpart, handles states for nav and others
 const MainPage: React.FunctionComponent<IMainProps> = (props:IMainProps) => {
@@ -143,7 +145,9 @@ const MainPage: React.FunctionComponent<IMainProps> = (props:IMainProps) => {
     <ThemeProvider theme={myTheme}>
     <Stack>
       <StoreDispatch.Provider value={dispatchStore}>
-        <StoreData.Provider value={data}>
+      <StoreData.Provider value={data}>
+      <DateContext.Provider value={date}>
+      <DateDispatch.Provider value={setDate}>
             <Stack horizontal>
               <NavBar pageState={pageState} setPageState={setPageState}/>
               {/* <IconButton iconProps={{ iconName: 'ToggleLeft' }} title="Dark Mode" aria-label={"toggle"} onClick={() => {setIsDark(old => !old)}}/> */}
@@ -151,8 +155,8 @@ const MainPage: React.FunctionComponent<IMainProps> = (props:IMainProps) => {
             <Stack>
               {pageState === "new" &&
                 <NewProjectPage
-                  dateObj={date}
-                  setDateApi={setDate}
+                dateObj={date}
+                setDateApi={setDate}
                 />
               }
               {pageState === "drafts" &&
@@ -160,7 +164,9 @@ const MainPage: React.FunctionComponent<IMainProps> = (props:IMainProps) => {
                 />
               }
             </Stack>
-        </StoreData.Provider>
+      </DateDispatch.Provider>
+      </DateContext.Provider>
+      </StoreData.Provider>
       </StoreDispatch.Provider>
     </Stack>
     </ThemeProvider>

@@ -1,5 +1,5 @@
-import { IComponentStyles } from "@uifabric/foundation";
-import { forEach } from "lodash";
+import * as React from 'react';
+import { getWeek, getYear } from 'date-fns'
 
 export const stylesDanger = {
   root: [
@@ -106,6 +106,12 @@ const valueToSeconds = (value:number):number => {
   };
 };
 
+/**
+* checks if an object has a list of prop/keys
+* @param  {[]} list - vlist of properties to loop
+* @param  {Object} rowData - object to check property of
+* @return {[]}
+*/
 const objHasProperty = (list: string[], rowData: object): [boolean, string] => {
 
   let _valid = true;
@@ -123,4 +129,27 @@ const objHasProperty = (list: string[], rowData: object): [boolean, string] => {
   return [_valid, _msg];
 };
 
-export {getRandomInt, delay, weekToDate, valueToSeconds, objHasProperty};
+
+/**
+* gets the week and year from a date object
+* @param  {Date} param - value to get time details from
+* @return {[string, string]} list, wek and year
+*/
+const getWeekAndYear = (param: Date): [string, string] => {
+  // basic checks
+  if (param === null || param === undefined) return;
+
+  // var
+  let _week = 0;
+  let _year = 0;
+
+  // get week
+  _week = getWeek(param, {weekStartsOn: 1});
+
+  // get year
+  _year = getYear(param);
+
+  return [_week.toString(), _year.toString()];
+}
+
+export {getRandomInt, delay, weekToDate, valueToSeconds, objHasProperty, getWeekAndYear};

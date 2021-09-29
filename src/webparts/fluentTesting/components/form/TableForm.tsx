@@ -27,6 +27,8 @@ import TimeEditor, {timeValueFormatter} from './customCellEditor';
 import {useGetDatesHook} from "../utils/reactHooks";
 // utils
 import {valueToSeconds, objHasProperty} from "../utils/utils";
+import { secondsToHours } from 'date-fns'
+import * as XLSX from "xlsx";
 
 export interface IProps {
   dateObj?: Date;
@@ -140,7 +142,7 @@ const TableForm: React.FunctionComponent<IProps> = (props: IProps)  => {
   const calculateTotalTime = () => {
 
     // total
-    let totalTime = 0;
+    let totalTimeInSec = 0;
 
     gridApi.forEachNode((rowNode, index) => {
       // get row data
@@ -149,12 +151,12 @@ const TableForm: React.FunctionComponent<IProps> = (props: IProps)  => {
       Object.keys(rowdata).forEach(colName => {
         if (weekDays.includes(colName)) {
           let timeInSec = valueToSeconds(rowdata[colName]);
-          totalTime += timeInSec;
+          totalTimeInSec += timeInSec;
         };
       });
     });
 
-    props.setTimeHours(Number(totalTime/3600).toFixed(1));
+    props.setTimeHours(`${secondsToHours(totalTimeInSec)} Hours`);
   };
   // validate data in table
   const validateDataEntries = ():boolean => {
@@ -243,16 +245,17 @@ const TableForm: React.FunctionComponent<IProps> = (props: IProps)  => {
         {lgTab && <div>largeTablet</div>}
         {xlgTab && <div>xxlargeTablet</div>}
       </div>
-      <StackItem align="start">
+      <Stack horizontal tokens={{ childrenGap: 9, padding: 4 }}>
         <TableControls
           api={gridApi}
           column={gridColumnApi}
           rowState={rowSelected}
+          validateDataEntries={validateDataEntries}
         />
         <Label>
-          Hours spent : {props.timeHours}
+          Total Time Spent : {props.timeHours}
         </Label>
-      </StackItem>
+      </Stack>
       <StackItem align="stretch">
         <div className="ag-theme-alpine" style={{height: 500, width: "100%"}}>
           <AgGridReact
@@ -311,12 +314,14 @@ export interface ITableControlProps {
   api:GridApi | null;
   column:ColumnApi | null;
   rowState?: number[]
+  validateDataEntries: Function
 }
 
 const TableControls: React.FunctionComponent<ITableControlProps> = (props:ITableControlProps) => {
 
   // row number state
   const [rowNum, setRowNum] = React.useState(1);
+  const uploadRef: React.RefObject<HTMLInputElement> = React.createRef();
 
   const handleRowNum = React.useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -325,27 +330,91 @@ const TableControls: React.FunctionComponent<ITableControlProps> = (props:ITable
     [],
   );
 
-  const handleAddRowClick = e => {
-    e.preventDefault();
+  const handleAddRowClick = (event:React.MouseEvent<any>) => {
+    // prev default
+    event.preventDefault();
+    // rows array to add
     let rowArr = []
-
+    // push new obj into array
     for (let index = 0; index < rowNum; index++) {
       rowArr.push(new Object);
     };
-
+    // aply transaction
     props.api.applyTransaction({
       add: rowArr
-    })
+    });
+    // validate data rows after adding
+    props.validateDataEntries();
   };
 
-  const removeRowClick = e => {
-    e.preventDefault();
+  const removeRowClick = (event:React.MouseEvent<any>) => {
+    // prev default
+    event.preventDefault();
+    // get selected nodes
     const selectedNodes = props.api.getSelectedNodes();
+    // map data from node nodes
     const selectedData = selectedNodes.map( node => node.data );
-    console.log(selectedData)
+    // apply transaction
     props.api.applyTransaction({
       remove:selectedData
     });
+  };
+
+  // experimental, upload excel
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    // get ref
+    let fileElem:HTMLInputElement = uploadRef.current;
+    // get file
+    console.log(fileElem.files[0]);
+    // make a reader
+    let reader = new FileReader();
+    // on load of rader
+    reader.onload = function(e) {
+      var data = new Uint8Array(reader.result as ArrayBuffer);
+
+      var workbook = XLSX.read(data, {type: 'array'});
+  
+      console.log(workbook);
+      populateGridWithWorkbook(workbook);
+    };
+    reader.readAsArrayBuffer(fileElem.files[0]);
+    
+  };
+
+  const populateGridWithWorkbook = (workbook:XLSX.WorkBook) => {
+
+    // workbook name by sheet index
+    let firstSheetName = workbook.SheetNames[0];
+    // sheet by sheet name
+    let worksheet = workbook.Sheets[firstSheetName];
+    // columns
+    let columns = {
+      "A": "Project",
+      "B": "Task",
+      "C": "Location",
+      "D": "Description"
+    };
+
+    // row data
+    let rowData = [];
+    // start index at 2, first row headers
+    let rowIndex = 2;
+    // iterate over the worksheet pulling out the columns we're expecting
+    while (worksheet['A' + rowIndex]) {
+      let row = {};
+      Object.keys(columns).forEach(function(column) {
+          row[columns[column]] = worksheet[column + rowIndex].w;
+      });
+
+      rowData.push(row);
+
+      rowIndex++;
+    }
+    // set data
+    props.api.setRowData(rowData);
+
+    // validate data entries
+    props.validateDataEntries();
   };
 
   return(
@@ -368,9 +437,14 @@ const TableControls: React.FunctionComponent<ITableControlProps> = (props:ITable
           disabled={(props.rowState.length === 0)}
           styles={stylesDanger}
         />
+        <div>
+          <input type="file" name="testing" id="testxml" ref={uploadRef} onChange={handleFileUpload}/>
+        </div>
       </Stack>
     </>
   );
-}
+};
+
+
 
 export default TableForm;

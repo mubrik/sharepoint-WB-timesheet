@@ -1,6 +1,6 @@
 import * as React from 'react';
-// context
-import {StoreDispatch, StoreData, IState} from "../FluentTesting";
+// context, components
+import {StoreDispatch, StoreData, IState, DateContext} from "../FluentTesting";
 // UI
 import {Label, Stack, StackItem,
   PrimaryButton, IDropdownOption,
@@ -10,14 +10,15 @@ import {Label, Stack, StackItem,
 import { GridApi} from "@ag-grid-community/all-modules";
 // forms
 import TableForm from './TableForm';
-import PeriodInput from './PeriodInput';
+import PeriodInput, {DateInput} from './PeriodInput';
 import EditPage from "../draft/EditPage";
+import NotificationBar from '../utils/NotificationBar';
 // types
 import { IUserWeekData, IUserWeek} from "../sampleData";
 // hooks
 import {useGetDatesHook} from "../utils/reactHooks";
 // utiliity
-import {delay, getRandomInt, objHasProperty} from "../utils/utils";
+import {delay, getRandomInt, getWeekAndYear} from "../utils/utils";
 
 //type
 export interface IProps {
@@ -30,9 +31,11 @@ const NewProjectPage: React.FunctionComponent<IProps> = (props: IProps) => {
   // context data
   const dispatchStore = React.useContext(StoreDispatch);
   const storeData: IState = React.useContext(StoreData);
+  const dateValue: Date = React.useContext(DateContext);
+
   // controlled states, lifted up from period input
-  const [year, setYear] = React.useState<null | IDropdownOption>(null);
-  const [week, setWeek] = React.useState<null | IDropdownOption>(null);
+  /* const [year, setYear] = React.useState<null | IDropdownOption>(null);
+  const [week, setWeek] = React.useState<null | IDropdownOption>(null); */
   // page state
   const [pageState, setPageState] = React.useState<string>("new");
   const [editItem, setEditItem] = React.useState<IUserWeek|null>(null);
@@ -51,20 +54,50 @@ const NewProjectPage: React.FunctionComponent<IProps> = (props: IProps) => {
 
   React.useEffect(() => {
     // logic to determine draft availabale, dumb logic for now
-    if (year && week) {
+    // context version
+    if (dateValue === null) return;
+    // implemnt get date range and use last date for when week selected cuts different years
+    let [_week, _year] = getWeekAndYear(dateValue);
+    // null first
+    setEditItem(null);
+
+    // if condition matches, change
+    if (_year in storeData.data) {
+      if ( _week in storeData.data[_year]){
+        // draft available
+        setEditItem(storeData.data[_year][_week]);
+      }
+    }
+    // period input
+    /* if (year && week) {
+
+      setEditItem(null);
+
       if (String(year.text) in storeData.data) {
         if ( String(week.key) in storeData.data[year.text]){
           // draft available
           setEditItem(storeData.data[year.text][String(week.key)]);
         }
       }
-    };
-  }, [year, week])
+    }; */
+  }, [/* year, week */dateValue])
 
   // validation checker, will add more stuff to check as requested
   React.useEffect(() => {
     // if period not selected
-    if (year === null || week === null) {
+    /* if (year === null || week === null) {
+      setValidState((oldState) => {
+        return {
+          ...oldState,
+          state: false,
+          msg: "Select a Time period"
+        }
+      });
+
+      return;
+    } */
+    // if date not selected
+    if (dateValue === null) {
       setValidState((oldState) => {
         return {
           ...oldState,
@@ -107,18 +140,20 @@ const NewProjectPage: React.FunctionComponent<IProps> = (props: IProps) => {
         msg: ""
       }
     });
-  }, [timeHours, year, week, tableState]);
+  }, [timeHours, /* year, week, */ tableState, dateValue]);
 
   // handle save clicked
   const handleSaveClick = () => {
-    if (year === null || week === null) return;
+    /* if (year === null || week === null) return; */
+    if (dateValue === null) return;
     
     // butoon loading state
     setIsLoading(true);
 
     // prepare data
-    let _week = Number(week.key);
-    let _year = Number(year.text);
+    /* let _week = Number(week.key);
+    let _year = Number(year.text); */
+    let [_week, _year] = getWeekAndYear(dateValue);
     let _weekData: IUserWeekData[] = []
 
     // use grid api
@@ -142,8 +177,8 @@ const NewProjectPage: React.FunctionComponent<IProps> = (props: IProps) => {
 
     // data
     let _postData: IUserWeek = {
-      week: _week,
-      year: _year,
+      week: Number(_week),
+      year: Number(_year),
       data: _weekData,
       status: "draft"
     };
@@ -170,48 +205,27 @@ const NewProjectPage: React.FunctionComponent<IProps> = (props: IProps) => {
     setPageState("editDraft");
   };
 
-  /* // utils
-  const validateDataEntries = ():boolean => {
-    const arrToValidate = ["Project", "Task"];
-    let isValid = true;
-
-    gridApi.forEachNode((rowNode, index) => {
-      // get row data
-      let rowdata = {...rowNode.data};
-      // row id
-      let rowId = index;
-      // check validity
-      let [valid, response] = objHasProperty(arrToValidate, rowdata);
-
-      if (!valid) {
-        setValidState((oldState) => {
-          return {
-            ...oldState,
-            state: false,
-            msg: response + ` at row ${rowId + 1}`
-          }
-        });
-        isValid = false;
-      };
-    })
-
-    return isValid;
-  }; */
-
   return(
     <>
     {pageState === "new" &&
       <>
       <Stack tokens={{ childrenGap: 10, padding: 8 }} horizontal verticalAlign={"center"}>
         <StackItem>
-          <PeriodInput
+          <DateInput/>
+          {/* <PeriodInput
             setDate={props.setDateApi}
             year={year}
             setYear={setYear}
             week={week}
             setWeek={setWeek}
-          />
+          /> */}
         </StackItem>
+        {
+          editItem && 
+          <StackItem align={"end"}>
+            <PrimaryButton text={"Draft Available"} onClick={handleDraftClick}/>
+          </StackItem>
+        }
         <StackItem align={"end"}>
           <Label>
             {selectedDates ? 
@@ -220,11 +234,6 @@ const NewProjectPage: React.FunctionComponent<IProps> = (props: IProps) => {
             ""
             }
           </Label>
-        </StackItem>
-        <StackItem align={"end"}>
-          {editItem && 
-            <PrimaryButton text={"Draft Available"} onClick={handleDraftClick}/>
-          }
         </StackItem>
       </Stack>
       <Stack tokens={{ childrenGap: 7, padding: 5 }}>
@@ -243,14 +252,11 @@ const NewProjectPage: React.FunctionComponent<IProps> = (props: IProps) => {
             <ProgressIndicator label={"Creating Sheet"}/>
           }
           {notification && 
-            <MessageBar
-              messageBarType={MessageBarType.success}
-              onDismiss={(e) => console.log(e)}
-              isMultiline={false}
-              dismissButtonAriaLabel={"close"}
-            >
-              Sheet Updated Successfully
-            </MessageBar>
+            <NotificationBar
+              barType={MessageBarType.success}
+              show={notification}
+              msg={"Sheet Updated Successfully"}
+            />
           }
           <PrimaryButton text={"Save Sheet"} onClick={handleSaveClick} disabled={!validState.state || isLoading}/>
           <Label>

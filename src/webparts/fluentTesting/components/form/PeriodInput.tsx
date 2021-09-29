@@ -5,10 +5,13 @@ import {StoreDispatch, StoreData, IState} from "../FluentTesting";
 import {
   Dropdown, IDropdownOption,
   Stack, PrimaryButton,
-  StackItem, DatePicker
+  StackItem, DatePicker,
+  DayOfWeek, FirstWeekOfYear
 } from 'office-ui-fabric-react';
+// components
+import {DateContext, DateDispatch} from "../FluentTesting";
 // utils
-import {weekToDate} from "../utils/utils";
+import {weekToDate, getWeekAndYear} from "../utils/utils";
 
 // types
 export interface IProps {
@@ -96,13 +99,16 @@ const PeriodInput: React.FunctionComponent<IProps> = (props:IProps) => {
   );
 };
 
-/* const DateInput: React.FunctionComponent<IDateInputProps> = (props:IDateInputProps) => {
+const DateInput: React.FunctionComponent = () => {
 
+  // react context
+  const dateValue:Date = React.useContext(DateContext);
+  const dateDispatch:React.Dispatch<React.SetStateAction<null|Date>>  = React.useContext(DateDispatch);
 
   // handle date selected
   const handleDateSelected = (date: Date | null | undefined) => {
     // do something
-    props.setDate(date);
+    dateDispatch(date);
   };
 
   // format label to show week
@@ -111,19 +117,20 @@ const PeriodInput: React.FunctionComponent<IProps> = (props:IProps) => {
       return "Select date";
     };
 
-    let weekstring = String(getWeek(date));
-    return weekstring;
+    let [_week, _year] = getWeekAndYear(date);
+    return `Year: ${_year} Week: ${_week}`
   };
 
   return(
     <div>
       <DatePicker
-        value={props.dateObj ? props.dateObj : new Date()}
-        initialPickerDate={props.dateObj}
-        label={`Week: ${formatLabel(props.dateObj)}`}
+        value={dateValue ? dateValue : new Date()}
+        initialPickerDate={dateValue}
+        label={formatLabel(dateValue)}
+        firstDayOfWeek={DayOfWeek.Monday}
         highlightSelectedMonth={true}
         showWeekNumbers={true}
-        firstWeekOfYear={1}
+        firstWeekOfYear={FirstWeekOfYear.FirstDay}
         showMonthPickerAsOverlay={true}
         placeholder="Select a date..."
         ariaLabel="Select a date"
@@ -131,7 +138,8 @@ const PeriodInput: React.FunctionComponent<IProps> = (props:IProps) => {
       />
     </div>
   );
-}; */
+};
 
 
 export default PeriodInput;
+export {DateInput};

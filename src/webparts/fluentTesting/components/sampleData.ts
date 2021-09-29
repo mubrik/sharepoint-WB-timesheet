@@ -1,3 +1,4 @@
+import { IGroup } from "office-ui-fabric-react";
 // types
 export interface IUserWeekData {
   id: number;
@@ -106,3 +107,17 @@ export const testData:IUserYear = {
     }
   }
 }
+
+const group20:IGroup = {
+  key: "2020",
+  count: 53,
+  name: "2020",
+  startIndex: 0
+}
+const group21:IGroup = {
+  key: "2021",
+  count: 53,
+  name: "2021",
+  startIndex: 0
+}
+export const draftGroupList: IGroup[] = [group20, group21]
