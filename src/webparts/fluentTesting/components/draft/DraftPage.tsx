@@ -1,6 +1,6 @@
 import * as React from 'react';
 // react context
-import {StoreDispatch, StoreData, IState} from "../FluentTesting";
+import {StoreData, IState} from "../FluentTesting";
 // UI
 import { Icon, FocusZone,
   FocusZoneDirection, TextField,
@@ -10,7 +10,7 @@ import { Icon, FocusZone,
   StackItem, Stack, 
   Dropdown, IDropdownOption,
   Spinner, SelectionMode, DetailsRow,
-  GroupedList, IGroup
+  GroupedList, IGroup, DetailsListLayoutMode
 } from 'office-ui-fabric-react';
 // components
 import EditPage from './EditPage';
@@ -69,19 +69,48 @@ export interface IDraftProps {
   userData?: IUserYear;
 }
 
+interface IInitialState {
+  2020: IUserWeek[];
+  2021: IUserWeek[];
+  full: IUserWeek[];
+  status: string;
+}
+
+const initialState:IInitialState = {
+  2020: [],
+  2021: [],
+  full: [],
+  status: "idle"
+}
+
 const DraftPage: React.FunctionComponent<IDraftProps> = (props:IDraftProps) => {
 
   // context
-  const storeData: IState = React.useContext(StoreData);
-  const storeDispatch = React.useContext(StoreDispatch);
+  const {data:storeData}:{data: IState} = React.useContext(StoreData);
 
   // controlled states
   const [year, setYear] = React.useState<null | IDropdownOption>(null);
+  const [statusFilter, setStatusFilter] = React.useState<null | IDropdownOption>(null);
   const [pageState, setPageState] = React.useState<string>("list");
   const [editItem, setEditItem] = React.useState<IUserWeek|null>(null);
   // list data, data list should be async set in production
-  const [dataList, setDataList] = React.useState<null | IUserWeek[]>(null);
+  const [draftData, setDraftData] = React.useState<IInitialState>(initialState);
   const [shownItems, setShownItems] = React.useState<null | IUserWeek[]>(null);
+
+  // year keys
+  const controlledYear = [
+    {key: "2020", text: "2020"},
+    {key: "2021", text: "2021"},
+    {key: "full", text: "All"},
+  ];
+
+  // status filter keys
+  const controlledStatus = [
+    {key: "draft", text: "Draft"},
+    {key: "pending", text: "Pending"},
+    {key: "approved", text: "Approved"},
+    {key: "full", text: "All"},
+  ];
 
   // column for list
   const columns: IColumn[] = [
@@ -126,7 +155,7 @@ const DraftPage: React.FunctionComponent<IDraftProps> = (props:IDraftProps) => {
       },
       isPadded: true,
     }
-  ]
+  ];
 
   // render row in group
   const onRenderGroupRow = React.useCallback(
@@ -144,22 +173,35 @@ const DraftPage: React.FunctionComponent<IDraftProps> = (props:IDraftProps) => {
     if (year === null) {
       if (storeData.status === "loaded") {
         // get data from different year and make a list
-        let fullWeeksArray:IUserWeek[] = [];
-
-        let _data20: IUserWeeks = storeData.data["2020"];
-        let _data21: IUserWeeks = storeData.data["2021"];
-
-
+        let weeksIn2020:IUserWeek[] = [];
+        let weeksIn2021:IUserWeek[] = [];
+        // objects with data
+        let _data20:IUserWeeks = storeData.data["2020"];
+        let _data21:IUserWeeks = storeData.data["2021"];
+        // loop 2020 keys
         Object.keys(_data20).forEach((key) => {
-          fullWeeksArray.push(_data20[key]);
+          weeksIn2020.push(_data20[key]);
         });
-        
+        // loop 2021 keys
         Object.keys(_data21).forEach((key) => {
-          fullWeeksArray.push(_data21[key]);
+          weeksIn2021.push(_data21[key]);
+        });
+        // concat
+        let fullWeeksArray:IUserWeek[] = weeksIn2020.concat(weeksIn2021);
+
+        // set data
+        setDraftData((oldData) => {
+          return {
+            ...oldData,
+            2020: weeksIn2020,
+            2021: weeksIn2021,
+            full: fullWeeksArray,
+            status: "loaded"
+          }
         });
 
-        // set list 
-        setDataList(fullWeeksArray);
+        /* // set list 
+        setDataList(fullWeeksArray); */
         // set shown list
         setShownItems(fullWeeksArray);
 
@@ -168,29 +210,39 @@ const DraftPage: React.FunctionComponent<IDraftProps> = (props:IDraftProps) => {
     }
   }, [storeData]);
 
-  // year keys
-  const controlledYear = [
-    {key: "2020", text: "2020"},
-    {key: "2021", text: "2021"},
-  ];
-
   // handle item selected
-  const handleYearChange = (event: React.FormEvent<HTMLDivElement>, item: IDropdownOption) => {
-    // if no datat to work on
-    if (dataList === null) return;
+  const handleYearChanged = (event: React.FormEvent<HTMLDivElement>, item: IDropdownOption) => {
 
+    // set year
     setYear(item);
-    let filteredYear:IUserWeek[] = [];
+    // set items
+    let arrayToSet:Array<IUserWeek> = draftData[item.key];
 
-    dataList.forEach((weekItem) => {
-      if (weekItem.year === Number(item.key)) {
-        filteredYear.push(weekItem);
-      }
-    })
-
-    setShownItems(filteredYear);
+    if (arrayToSet.length === 0) {
+      setShownItems(null);
+    } else {
+      setShownItems(arrayToSet);
+    };
   };
 
+  const handleStatusChanged = (event: React.FormEvent<HTMLDivElement>, item: IDropdownOption) => {
+    // set status
+    setStatusFilter(item);
+    // status string
+    let _status = item.key;
+    // working data
+    let _arrayToFilter:IUserWeek[] = year ? draftData[year.key] : draftData["full"];
+    if (_status === "full") {
+      setShownItems(draftData["full"]);
+      return;
+    }
+    // filter by week
+    setShownItems(_arrayToFilter.filter(weekItem => {
+      return weekItem.status === _status;
+    }));
+  };
+
+  // on item click
   const handleListItemClick = (weekData: IUserWeek) => {
     setEditItem(weekData);
 
@@ -198,20 +250,16 @@ const DraftPage: React.FunctionComponent<IDraftProps> = (props:IDraftProps) => {
   };
   
   // filter
-  const onFilterChanged = (_: any, text: string): void => {
-    if (dataList === null) return;
+  const handleFilterChanged = (_: any, text: string): void => {
 
-    if (year) {
-      // work with year filtered array
-      setShownItems(dataList.filter(weekItem => {
-        if (weekItem.year === Number(year.key)) {
-          return weekItem.week.toString().toLowerCase().indexOf(text.toLowerCase()) >= 0;
-        }
-        return false;
-      }));
-    } else {
-      setShownItems(dataList.filter(weekItem => weekItem.week.toString().toLowerCase().indexOf(text.toLowerCase()) >= 0));
-    }
+    // working data
+    let _arrayToFilter:IUserWeek[] = year ? draftData[year.key] : draftData["full"];
+
+    // filter by week
+    setShownItems(_arrayToFilter.filter(weekItem => {
+      return weekItem.week.toString().toLowerCase().indexOf(text.toLowerCase()) >= 0;
+    }));
+
   };
 
   // function to render a single list item
@@ -237,38 +285,49 @@ const DraftPage: React.FunctionComponent<IDraftProps> = (props:IDraftProps) => {
         <Stack horizontal tokens={{ childrenGap: 10, padding: 8 }}>
           <StackItem>
             <Dropdown
-              selectedKey={year ? year.key : undefined}
+              selectedKey={year ? year.key : "full"}
               label="Select a Year"
               options={controlledYear}
-              onChange={handleYearChange}
+              onChange={handleYearChanged}
             />
           </StackItem>
           <StackItem>
             <TextField
               label={'Filter by Week'}
-              onChange={onFilterChanged}
+              onChange={handleFilterChanged}
               type={"number"}
+              min={0}
+              max={53}
             />
           </StackItem>
+          {/* <StackItem>
+            <Dropdown
+              selectedKey={statusFilter ? statusFilter.key : "full"}
+              label={"Filter Status"}
+              options={controlledStatus}
+              onChange={handleStatusChanged}
+            />
+          </StackItem> */}
         </Stack>
         <Stack>
           {shownItems && 
           <FocusZone direction={FocusZoneDirection.vertical}>
             <List items={shownItems} onRenderCell={onRenderCell} />
-            <GroupedList
+            {/* <GroupedList
               items={shownItems}
               onRenderCell={onRenderGroupRow}
               groups={draftGroupList}
-            />
+            /> */}
             {/* <DetailsList
               items={shownItems}
               columns={columns}
               isHeaderVisible={true}
               selectionMode={SelectionMode.none}
+              layoutMode={DetailsListLayoutMode.justified}
               onRenderRow={(props) => {
                 console.log(props);
                 return (
-                <div className={classNames.itemCell} onClick={() => handleListItemClick(props.item)}>
+                <div onClick={() => handleListItemClick(props.item)}>
                   <DetailsRow {...props}/>
                 </div>)
               }}

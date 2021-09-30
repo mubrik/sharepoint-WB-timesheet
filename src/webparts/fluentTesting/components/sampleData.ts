@@ -70,6 +70,38 @@ export const testData:IUserYear = {
       data: [
         ...listData
       ]
+    },
+    "4": {
+      week: 4,
+      year: 2020,
+      status: "pending",
+      data: [
+        ...listData
+      ]
+    },
+    "5": {
+      week: 5,
+      year: 2020,
+      status: "pending",
+      data: [
+        ...listData
+      ]
+    },
+    "6": {
+      week: 6,
+      year: 2020,
+      status: "approved",
+      data: [
+        ...listData
+      ]
+    },
+    "7": {
+      week: 7,
+      year: 2020,
+      status: "approved",
+      data: [
+        ...listData
+      ]
     }
   },
   "2021": {
@@ -84,7 +116,7 @@ export const testData:IUserYear = {
     "2": {
       week: 2,
       year: 2021,
-      status: "draft",
+      status: "pending",
       data: [
         ...listData
       ]
@@ -92,7 +124,7 @@ export const testData:IUserYear = {
     "3": {
       week: 3,
       year: 2021,
-      status: "draft",
+      status: "pending",
       data: [
         ...listData
       ]
@@ -101,6 +133,22 @@ export const testData:IUserYear = {
       week: 4,
       year: 2021,
       status: "draft",
+      data: [
+        ...listData
+      ]
+    },
+    "5": {
+      week: 5,
+      year: 2021,
+      status: "approved",
+      data: [
+        ...listData
+      ]
+    },
+    "6": {
+      week: 6,
+      year: 2021,
+      status: "approved",
       data: [
         ...listData
       ]

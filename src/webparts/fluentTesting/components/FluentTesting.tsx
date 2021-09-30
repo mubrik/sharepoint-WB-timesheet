@@ -1,6 +1,6 @@
 import * as React from 'react';
 // UI
-import { Stack, IconButton } from 'office-ui-fabric-react';
+import { Stack } from 'office-ui-fabric-react';
 import { ThemeProvider } from '@uifabric/foundation';
 import { createTheme } from '@uifabric/styling';
 /* import { escape } from '@microsoft/sp-lodash-subset'; */
@@ -22,7 +22,7 @@ export type IState = {
   status: string;
 } 
 // action types
-type IAction =
+export type IAction =
  | { type: "updateAll", payload:IState }
  | { type: "updateLoading", payload: {status: string} }
  | { type: "updateWeek", payload: {data: IUserWeek} }
@@ -59,19 +59,15 @@ const myReducer = (state:IState, action:IAction): IState => {
       break;
   }
 };
-// context for pass down store dispatch
-export const StoreDispatch = React.createContext(null);
+// context to pass down date and store data
 export const StoreData = React.createContext(null);
 export const DateContext = React.createContext(null);
-export const DateDispatch = React.createContext(null);
 
 // main page for webpart, handles states for nav and others
 const MainPage: React.FunctionComponent<IMainProps> = (props:IMainProps) => {
 
   // page state
   const [pageState, setPageState] = React.useState("drafts");
-  // dark mode?
-  const [isDark, setIsDark] = React.useState<boolean>(false);
   // date selected
   const [date, setDate] = React.useState<Date | null>(null);
   // main data and dispatch store
@@ -88,12 +84,12 @@ const MainPage: React.FunctionComponent<IMainProps> = (props:IMainProps) => {
 
   // useeffect to fetch working data, will be async in prod, simulate "loading"
   React.useEffect(() => {
-
+    // dispatch loading status
     dispatchStore({
       type: "updateLoading",
       payload:{status: "loading"}
     })
-
+    // 5sec delay for actual data
     setTimeout(() => {
       dispatchStore({
         type: "updateAll",
@@ -133,24 +129,20 @@ const MainPage: React.FunctionComponent<IMainProps> = (props:IMainProps) => {
       white: '#ffffff',
     },
     semanticColors: {
-      bodyBackground: isDark ? "#000000" : "#c8c8c8",
-      bodyText: isDark ? "#ffffff" : "#000000",
-      bodyDivider: "#58357f"
+      bodyBackground: "#c8c8c8",
+      bodyText: "#000000",
     },
   });
 
-  console.log( "main theme", myTheme)
+  console.log( "main theme", myTheme);
 
   return(
     <ThemeProvider theme={myTheme}>
     <Stack>
-      <StoreDispatch.Provider value={dispatchStore}>
-      <StoreData.Provider value={data}>
-      <DateContext.Provider value={date}>
-      <DateDispatch.Provider value={setDate}>
+      <StoreData.Provider value={{data, dispatchStore}}>
+      <DateContext.Provider value={{date, setDate}}>
             <Stack horizontal>
               <NavBar pageState={pageState} setPageState={setPageState}/>
-              {/* <IconButton iconProps={{ iconName: 'ToggleLeft' }} title="Dark Mode" aria-label={"toggle"} onClick={() => {setIsDark(old => !old)}}/> */}
             </Stack>
             <Stack>
               {pageState === "new" &&
@@ -164,10 +156,8 @@ const MainPage: React.FunctionComponent<IMainProps> = (props:IMainProps) => {
                 />
               }
             </Stack>
-      </DateDispatch.Provider>
       </DateContext.Provider>
       </StoreData.Provider>
-      </StoreDispatch.Provider>
     </Stack>
     </ThemeProvider>
   );

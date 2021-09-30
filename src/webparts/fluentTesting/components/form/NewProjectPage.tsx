@@ -1,6 +1,6 @@
 import * as React from 'react';
 // context, components
-import {StoreDispatch, StoreData, IState, DateContext} from "../FluentTesting";
+import {IAction, StoreData, IState, DateContext} from "../FluentTesting";
 // UI
 import {Label, Stack, StackItem,
   PrimaryButton, IDropdownOption,
@@ -10,7 +10,7 @@ import {Label, Stack, StackItem,
 import { GridApi} from "@ag-grid-community/all-modules";
 // forms
 import TableForm from './TableForm';
-import PeriodInput, {DateInput} from './PeriodInput';
+import {DateInput} from './PeriodInput';
 import EditPage from "../draft/EditPage";
 import NotificationBar from '../utils/NotificationBar';
 // types
@@ -27,15 +27,9 @@ export interface IProps {
 }
 
 const NewProjectPage: React.FunctionComponent<IProps> = (props: IProps) => {
-
   // context data
-  const dispatchStore = React.useContext(StoreDispatch);
-  const storeData: IState = React.useContext(StoreData);
-  const dateValue: Date = React.useContext(DateContext);
-
-  // controlled states, lifted up from period input
-  /* const [year, setYear] = React.useState<null | IDropdownOption>(null);
-  const [week, setWeek] = React.useState<null | IDropdownOption>(null); */
+  const {data:storeData, dispatchStore}:{data: IState, dispatchStore:React.Dispatch<IAction>} = React.useContext(StoreData);
+  const {date: dateValue}: {date: Date} = React.useContext(DateContext);
   // page state
   const [pageState, setPageState] = React.useState<string>("new");
   const [editItem, setEditItem] = React.useState<IUserWeek|null>(null);
@@ -102,7 +96,7 @@ const NewProjectPage: React.FunctionComponent<IProps> = (props: IProps) => {
         return {
           ...oldState,
           state: false,
-          msg: "Select a Time period"
+          msg: "Select a Date"
         }
       });
 
@@ -113,6 +107,7 @@ const NewProjectPage: React.FunctionComponent<IProps> = (props: IProps) => {
 
       setValidState((oldState) => {
         return {
+          ...oldState,
           state: false,
           msg: "Hours cant be over 72"
         }

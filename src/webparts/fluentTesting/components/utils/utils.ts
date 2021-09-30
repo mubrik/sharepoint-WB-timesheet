@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { getWeek, getYear } from 'date-fns'
+import { IUserWeek } from '../sampleData';
 
 export const stylesDanger = {
   root: [
@@ -39,7 +40,7 @@ function getRandomInt(max: number): number {
   return Math.floor(Math.random() * max);
 };
 // delay function, returns promise
-function delay(t:number, v) {
+function delay(t:number, v:IUserWeek): Promise<IUserWeek> {
   return new Promise(function(resolve) { 
       setTimeout(resolve.bind(null, v), t)
   });

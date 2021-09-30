@@ -1,6 +1,4 @@
 import * as React from 'react';
-// context
-import {StoreDispatch, StoreData, IState} from "../FluentTesting";
 // UI
 import {
   Dropdown, IDropdownOption,
@@ -9,7 +7,7 @@ import {
   DayOfWeek, FirstWeekOfYear
 } from 'office-ui-fabric-react';
 // components
-import {DateContext, DateDispatch} from "../FluentTesting";
+import {DateContext} from "../FluentTesting";
 // utils
 import {weekToDate, getWeekAndYear} from "../utils/utils";
 
@@ -23,10 +21,6 @@ export interface IProps {
 }
 
 const PeriodInput: React.FunctionComponent<IProps> = (props:IProps) => {
-
-  // context
-  const storeData: IState = React.useContext(StoreData);
-  const storeDispatch = React.useContext(StoreDispatch);
 
   // handle item selected
   const handleYearChange = (event: React.FormEvent<HTMLDivElement>, item: IDropdownOption) => {
@@ -102,13 +96,12 @@ const PeriodInput: React.FunctionComponent<IProps> = (props:IProps) => {
 const DateInput: React.FunctionComponent = () => {
 
   // react context
-  const dateValue:Date = React.useContext(DateContext);
-  const dateDispatch:React.Dispatch<React.SetStateAction<null|Date>>  = React.useContext(DateDispatch);
+  const {date, setDate}: {date: Date, setDate:React.Dispatch<React.SetStateAction<null|Date>> } = React.useContext(DateContext);
 
   // handle date selected
   const handleDateSelected = (date: Date | null | undefined) => {
     // do something
-    dateDispatch(date);
+    setDate(date);
   };
 
   // format label to show week
@@ -124,9 +117,9 @@ const DateInput: React.FunctionComponent = () => {
   return(
     <div>
       <DatePicker
-        value={dateValue ? dateValue : new Date()}
-        initialPickerDate={dateValue}
-        label={formatLabel(dateValue)}
+        value={date ? date : new Date()}
+        initialPickerDate={date}
+        label={formatLabel(date)}
         firstDayOfWeek={DayOfWeek.Monday}
         highlightSelectedMonth={true}
         showWeekNumbers={true}
@@ -135,6 +128,8 @@ const DateInput: React.FunctionComponent = () => {
         placeholder="Select a date..."
         ariaLabel="Select a date"
         onSelectDate={handleDateSelected}
+        minDate={new Date(2020, 1, 1)}
+        maxDate={new Date(2021, 12, 31)}
       />
     </div>
   );

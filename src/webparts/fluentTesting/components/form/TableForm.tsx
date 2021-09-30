@@ -28,6 +28,7 @@ import {useGetDatesHook} from "../utils/reactHooks";
 // utils
 import {valueToSeconds, objHasProperty} from "../utils/utils";
 import { secondsToHours } from 'date-fns'
+import NotificationBar from '../utils/NotificationBar';
 import * as XLSX from "xlsx";
 
 export interface IProps {
@@ -252,9 +253,11 @@ const TableForm: React.FunctionComponent<IProps> = (props: IProps)  => {
           rowState={rowSelected}
           validateDataEntries={validateDataEntries}
         />
-        <Label>
-          Total Time Spent : {props.timeHours}
-        </Label>
+        <StackItem>
+          <Label>
+            Total Time Spent : {props.timeHours}
+          </Label>          
+        </StackItem>
       </Stack>
       <StackItem align="stretch">
         <div className="ag-theme-alpine" style={{height: 500, width: "100%"}}>
@@ -365,20 +368,28 @@ const TableControls: React.FunctionComponent<ITableControlProps> = (props:ITable
     // get ref
     let fileElem:HTMLInputElement = uploadRef.current;
     // get file
-    console.log(fileElem.files[0]);
+    let xlDoc = fileElem.files[0];
+    console.log(xlDoc);
+    // mini validation
+    let validTypes = [".xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"];
+    if (!validTypes.includes(xlDoc.type)) {
+      // preferably notify user
+      return;
+    };
     // make a reader
     let reader = new FileReader();
-    // on load of rader
+    // set function on load of reader
     reader.onload = function(e) {
       var data = new Uint8Array(reader.result as ArrayBuffer);
-
+      // xlsx read the data
       var workbook = XLSX.read(data, {type: 'array'});
   
       console.log(workbook);
+      // populate the form
       populateGridWithWorkbook(workbook);
     };
-    reader.readAsArrayBuffer(fileElem.files[0]);
-    
+    // read the file
+    reader.readAsArrayBuffer(xlDoc);
   };
 
   const populateGridWithWorkbook = (workbook:XLSX.WorkBook) => {
@@ -392,20 +403,27 @@ const TableControls: React.FunctionComponent<ITableControlProps> = (props:ITable
       "A": "Project",
       "B": "Task",
       "C": "Location",
-      "D": "Description"
+      "D": "Activity Desription",
+      "E": "monday",
+      "F": "tuesday",
+      "G": "wednesday",
+      "H": "thursday",
+      "I": "friday",
+      "J": "saturday",
+      "K": "sunday",
     };
 
     // row data
     let rowData = [];
     // start index at 2, first row headers
     let rowIndex = 2;
-    // iterate over the worksheet pulling out the columns we're expecting
+    // iterate over each row in sheet pulling out the columns we're expecting
     while (worksheet['A' + rowIndex]) {
       let row = {};
       Object.keys(columns).forEach(function(column) {
           row[columns[column]] = worksheet[column + rowIndex].w;
       });
-
+      // push into row data
       rowData.push(row);
 
       rowIndex++;
@@ -437,9 +455,14 @@ const TableControls: React.FunctionComponent<ITableControlProps> = (props:ITable
           disabled={(props.rowState.length === 0)}
           styles={stylesDanger}
         />
-        <div>
-          <input type="file" name="testing" id="testxml" ref={uploadRef} onChange={handleFileUpload}/>
-        </div>
+        <Stack verticalAlign={"center"}>
+          <label htmlFor={"testxml"} style={{border: "1px solid blue"}}>Upload Excel</label>
+          <input type="file" name="testing" id="testxml" ref={uploadRef} 
+            onChange={handleFileUpload}
+            style={{"display": "none"}}
+            accept={".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}
+          />
+        </Stack>
       </Stack>
     </>
   );

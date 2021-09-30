@@ -1,11 +1,12 @@
 import * as React from 'react';
 // react context
-import {StoreDispatch} from "../FluentTesting";
+import {StoreData, IAction} from "../FluentTesting";
 // ui
 import { PrimaryButton, Stack, StackItem,
-  Label, ProgressIndicator, MessageBar,
+  Label, ProgressIndicator,
   MessageBarType,
- } from 'office-ui-fabric-react';
+} from 'office-ui-fabric-react';
+import NotificationBar from '../utils/NotificationBar';
 import TableForm from '../form/TableForm';
 import {stylesDanger} from "../utils/utils";
 // gridtable
@@ -22,8 +23,8 @@ interface IProps {
 }
 
 const EditPage:React.FunctionComponent<IProps> = (props:IProps) => {
-  // dispatch store
-  const dispatchStore = React.useContext(StoreDispatch);
+  // context data
+  const {dispatchStore}:{dispatchStore:React.Dispatch<IAction>} = React.useContext(StoreData);
   // grid api/mobile data store to control saving data
   const [gridApi, setGridApi] = React.useState<null | GridApi>(null);
   // controlled states, lifted up from period input
@@ -182,14 +183,11 @@ const EditPage:React.FunctionComponent<IProps> = (props:IProps) => {
           <ProgressIndicator label={"Updating Sheet"}/>
         }
         {notification && 
-          <MessageBar
-            messageBarType={MessageBarType.success}
-            onDismiss={(e) => console.log(e)}
-            isMultiline={false}
-            dismissButtonAriaLabel={"close"}
-          >
-            Sheet Updated Successfully
-          </MessageBar>
+          <NotificationBar
+            barType={MessageBarType.success}
+            msg={"Sheet Updated Successfully"}
+            show={notification}
+          />
         }
         <PrimaryButton text={"Update Draft"} onClick={handleSaveClick} disabled={!validState.state || isLoading}/>
         <Label>
