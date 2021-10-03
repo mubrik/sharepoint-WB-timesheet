@@ -10,6 +10,7 @@ import {
 import {DateContext} from "../FluentTesting";
 // utils
 import {weekToDate, getWeekAndYear} from "../utils/utils";
+import {useGetDatesHook} from "../utils/reactHooks";
 
 // types
 export interface IProps {
@@ -96,7 +97,14 @@ const PeriodInput: React.FunctionComponent<IProps> = (props:IProps) => {
 const DateInput: React.FunctionComponent = () => {
 
   // react context
-  const {date, setDate}: {date: Date, setDate:React.Dispatch<React.SetStateAction<null|Date>> } = React.useContext(DateContext);
+  const {date, setDate}: {date: Date|null, setDate:React.Dispatch<React.SetStateAction<null|Date>> } = React.useContext(DateContext);
+
+  // effect
+  React.useEffect(() => {
+    if (!date) {
+      setDate(new Date());
+    };
+  }, []);
 
   // handle date selected
   const handleDateSelected = (date: Date | null | undefined) => {
@@ -109,16 +117,22 @@ const DateInput: React.FunctionComponent = () => {
     if (date === null) {
       return "Select date";
     };
-
+    // get week and year
     let [_week, _year] = getWeekAndYear(date);
+    // get dates in week
+    let datesInWeek = useGetDatesHook(date);
+
+    let firstDay = datesInWeek[0];
+    let lastDay = datesInWeek[6];
+
     return `Year: ${_year} Week: ${_week}`
   };
 
   return(
-    <div>
+    <StackItem>
       <DatePicker
-        value={date ? date : new Date()}
-        initialPickerDate={date}
+        value={date}
+        initialPickerDate={date ? date : new Date()}
         label={formatLabel(date)}
         firstDayOfWeek={DayOfWeek.Monday}
         highlightSelectedMonth={true}
@@ -128,10 +142,10 @@ const DateInput: React.FunctionComponent = () => {
         placeholder="Select a date..."
         ariaLabel="Select a date"
         onSelectDate={handleDateSelected}
-        minDate={new Date(2020, 1, 1)}
+        minDate={new Date(2019, 11, 1)}
         maxDate={new Date(2021, 12, 31)}
       />
-    </div>
+    </StackItem>
   );
 };
 

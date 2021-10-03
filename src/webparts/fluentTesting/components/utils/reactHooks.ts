@@ -7,6 +7,7 @@ const useGetDatesHook = (dateObj: Date | null): Date[] | null => {
   if (dateObj === null) {
     return null
   };
+
   // get start and end date
   let startWeek = startOfWeek(dateObj, {weekStartsOn: 1});
   let endWeek = endOfWeek(dateObj, {weekStartsOn: 1});

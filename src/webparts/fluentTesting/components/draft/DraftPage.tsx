@@ -1,6 +1,6 @@
 import * as React from 'react';
 // react context
-import {StoreData, IState} from "../FluentTesting";
+import {StoreData, IState, DateContext,TableDataContext} from "../FluentTesting";
 // UI
 import { Icon, FocusZone,
   FocusZoneDirection, TextField,
@@ -14,8 +14,12 @@ import { Icon, FocusZone,
 } from 'office-ui-fabric-react';
 // components
 import EditPage from './EditPage';
+import TablePage from '../form/TablePage';
+import DraftDialog from '../utils/DraftDialog';
 // sample data types
-import { IUserWeek, IUserWeeks, IUserYear, draftGroupList } from '../sampleData';
+import { IUserWeek, IUserWeeks, IUserYear, draftGroupList, IUserWeekData } from '../sampleData';
+// utils
+import {weekToDate} from "../utils/utils";
 // theming
 const theme: ITheme = getTheme();
 const { palette, semanticColors, fonts } = theme;
@@ -85,8 +89,10 @@ const initialState:IInitialState = {
 
 const DraftPage: React.FunctionComponent<IDraftProps> = (props:IDraftProps) => {
 
-  // context
+  // react context
   const {data:storeData}:{data: IState} = React.useContext(StoreData);
+  const {date, setDate}: {date: Date|null, setDate:React.Dispatch<React.SetStateAction<null|Date>> } = React.useContext(DateContext);
+  const {setTableData}: {setTableData:React.Dispatch<React.SetStateAction<IUserWeekData[] | []>>} = React.useContext(TableDataContext);
 
   // controlled states
   const [year, setYear] = React.useState<null | IDropdownOption>(null);
@@ -95,6 +101,7 @@ const DraftPage: React.FunctionComponent<IDraftProps> = (props:IDraftProps) => {
   const [editItem, setEditItem] = React.useState<IUserWeek|null>(null);
   // list data, data list should be async set in production
   const [draftData, setDraftData] = React.useState<IInitialState>(initialState);
+  const [draftDialog, setDraftDialog] = React.useState({hidden: true, data: null});
   const [shownItems, setShownItems] = React.useState<null | IUserWeek[]>(null);
 
   // year keys
@@ -244,9 +251,11 @@ const DraftPage: React.FunctionComponent<IDraftProps> = (props:IDraftProps) => {
 
   // on item click
   const handleListItemClick = (weekData: IUserWeek) => {
-    setEditItem(weekData);
-
-    setPageState("edit");
+    // set draft dialog
+    setDraftDialog({
+      hidden: false,
+      data: weekData
+    });
   };
   
   // filter
@@ -278,10 +287,19 @@ const DraftPage: React.FunctionComponent<IDraftProps> = (props:IDraftProps) => {
   };
 
   return(
-    <Stack>
+    <Stack tokens={{ childrenGap: 7, padding: 2 }}>
       {
         pageState === "list" &&
         <>
+        {
+          !draftDialog.hidden && 
+          <DraftDialog
+            hidden={draftDialog.hidden}
+            setPageState={setPageState}
+            setDraftDialog={setDraftDialog}
+            weekData={draftDialog.data}
+          />
+        }
         <Stack horizontal tokens={{ childrenGap: 10, padding: 8 }}>
           <StackItem>
             <Dropdown
@@ -348,14 +366,14 @@ const DraftPage: React.FunctionComponent<IDraftProps> = (props:IDraftProps) => {
       {
         pageState === "edit" && 
         <>
-          <EditPage
-            editData={editItem}
-            setState={setPageState}
-          />
+        <TablePage
+          mode={"edit"}
+          setDraftPage={setPageState}
+        />
         </>
       }
     </Stack>
-  )
+  );
 };
 
 export default DraftPage;

@@ -5,13 +5,16 @@ import { IUserWeek } from '../sampleData';
 export const stylesDanger = {
   root: [
     {
-      background: "#f12e2ebd",
+      background: "#b70e0e",
       border: "0px solid black",
       selectors: {
         ':hover': {
+          background: "#b70e0e",
+          border: "0px solid black",
         },
         ':disabled': {
-          background: "#f12e2e59",
+          background: "#f3f2f1",
+          color: "#a19f9d",
           border: "0px solid black"
         },
       }
@@ -54,7 +57,7 @@ function delay(t:number, v:IUserWeek): Promise<IUserWeek> {
 * @return {Date}      
 */
 
-function weekToDate(year: number, week: number, weekDay = 1): Date {
+function weekToDate(year: number, week: number, weekDay = 0): Date {
 
   const getZeroBasedIsoWeekDay = date => (date.getDay() + 6) % 7;
   const getIsoWeekDay = date => getZeroBasedIsoWeekDay(date) + 1;
@@ -134,11 +137,11 @@ const objHasProperty = (list: string[], rowData: object): [boolean, string] => {
 /**
 * gets the week and year from a date object
 * @param  {Date} param - value to get time details from
-* @return {[string, string]} list, wek and year
+* @return {[string, string]} list, week and year
 */
 const getWeekAndYear = (param: Date): [string, string] => {
   // basic checks
-  if (param === null || param === undefined) return;
+  if (param === null || param === undefined) return ["..", ".."];
 
   // var
   let _week = 0;

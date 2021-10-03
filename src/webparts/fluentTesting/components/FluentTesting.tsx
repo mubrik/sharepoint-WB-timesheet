@@ -8,8 +8,9 @@ import { createTheme } from '@uifabric/styling';
 import {NavBar} from "./nav/Navbar";
 import NewProjectPage from "./form/NewProjectPage"
 import DraftPage from './draft/DraftPage';
+import TablePage from "./form/TablePage";
 // sample data and types
-import { IUserYear, IUserWeek, testData} from "./sampleData";
+import { IUserYear, IUserWeek, testData, IUserWeekData} from "./sampleData";
 import { WebPartContext } from "@microsoft/sp-webpart-base";
 
 export interface IMainProps {
@@ -62,6 +63,8 @@ const myReducer = (state:IState, action:IAction): IState => {
 // context to pass down date and store data
 export const StoreData = React.createContext(null);
 export const DateContext = React.createContext(null);
+// testing 
+export const TableDataContext = React.createContext(null);
 
 // main page for webpart, handles states for nav and others
 const MainPage: React.FunctionComponent<IMainProps> = (props:IMainProps) => {
@@ -72,11 +75,13 @@ const MainPage: React.FunctionComponent<IMainProps> = (props:IMainProps) => {
   const [date, setDate] = React.useState<Date | null>(null);
   // main data and dispatch store
   const [data, dispatchStore] = React.useReducer(myReducer, {data: {}, status: "idle"});
+  // table form data
+  const [tableData, setTableData] = React.useState<IUserWeekData[]|[]>([]);
 
   // useeffect for width
   React.useEffect(() => {
     try {
-      document.getElementById("workbenchPageContent").style.maxWidth = "1660px";
+      document.getElementById("workbenchPageContent").style.maxWidth = "1920px";
     } catch (error) {
 
     }
@@ -135,27 +140,32 @@ const MainPage: React.FunctionComponent<IMainProps> = (props:IMainProps) => {
   });
 
   console.log( "main theme", myTheme);
+  /* <NewProjectPage
+              dateObj={date}
+              setDateApi={setDate}
+              /> */
 
   return(
     <ThemeProvider theme={myTheme}>
-    <Stack>
+    <Stack tokens={{ childrenGap: 8, padding: 2 }}>
       <StoreData.Provider value={{data, dispatchStore}}>
       <DateContext.Provider value={{date, setDate}}>
-            <Stack horizontal>
-              <NavBar pageState={pageState} setPageState={setPageState}/>
-            </Stack>
-            <Stack>
-              {pageState === "new" &&
-                <NewProjectPage
-                dateObj={date}
-                setDateApi={setDate}
-                />
-              }
-              {pageState === "drafts" &&
-                <DraftPage
-                />
-              }
-            </Stack>
+        <Stack horizontal>
+          <NavBar pageState={pageState} setPageState={setPageState}/>
+        </Stack>
+        <TableDataContext.Provider value={{tableData, setTableData}}>
+          <Stack>
+            {pageState === "new" &&
+              <TablePage
+                mode={"new"}
+              />
+            }
+            {pageState === "drafts" &&
+              <DraftPage
+              />
+            }
+          </Stack>
+        </TableDataContext.Provider>
       </DateContext.Provider>
       </StoreData.Provider>
     </Stack>
