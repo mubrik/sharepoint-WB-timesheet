@@ -2,12 +2,12 @@ import * as React from 'react';
 // context data
 import { DateContext, TableDataContext } from '../FluentTesting';
 import {IAction, StoreData, IState} from "../FluentTesting";
-// componennt
-import {DateInput} from './PeriodInput';
 // UI
 import { PrimaryButton, Stack, 
   StackItem, Label,
-  ProgressIndicator, MessageBarType, IComponentAs
+  ProgressIndicator, MessageBarType,
+  DatePicker,
+  DayOfWeek, FirstWeekOfYear
 } from 'office-ui-fabric-react';
 import {stylesDanger} from "../utils/utils";
 // grid imports
@@ -15,8 +15,7 @@ import {
   GridReadyEvent, GridApi,
   ColumnApi, AllCommunityModules, 
   RowSelectedEvent, CellValueChangedEvent,
-  VirtualRowRemovedEvent, ComponentStateChangedEvent,
-  DisplayedRowsChangedEvent, ModelUpdatedEvent
+  VirtualRowRemovedEvent
 } from "@ag-grid-community/all-modules";
 import { AgGridReact, AgGridColumn} from "@ag-grid-community/react";
 import { useMediaQuery } from 'react-responsive';
@@ -68,7 +67,7 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps)  => {
   const {data:storeData}:{data: IState} = React.useContext(StoreData);
   const {date:dateValue}: {date: Date} = React.useContext(DateContext);
   // states
-  const [formMode, setFormMode] = React.useState<string>("new");
+  const [formMode, setFormMode] = React.useState<string>(_mode || "new");
   const [totalHoursInSec, setTotalHoursInSec] = React.useState<number|null>(0);
   const [hasDraft, setHasDraft] = React.useState(initialDraftState);
   // validation state, memo validation value to ease rerender
@@ -350,21 +349,17 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps)  => {
           setDraftPageState={props.setDraftPage}
           api={gridApi}
         />
-        <Stack horizontal tokens={{ childrenGap: 9, padding: 4 }}>
-          <StackItem>
-            <TableDateControl
-              formMode={formMode}
-              api={gridApi}
-              totalHoursInSec={totalHoursInSec}
-            />
-          </StackItem>
-          <TableDraftControl
-            hasDraft={hasDraft}
-            api={gridApi}
-            formMode={formMode}
-            setFormMode={setFormMode}
-          />
-        </Stack>
+        <TableDateControl
+          formMode={formMode}
+          api={gridApi}
+          totalHoursInSec={totalHoursInSec}
+        />
+        <TableDraftControl
+          hasDraft={hasDraft}
+          api={gridApi}
+          formMode={formMode}
+          setFormMode={setFormMode}
+        />
         <TableMainForm
           formMode={formMode}
           api={gridApi}
@@ -462,10 +457,10 @@ const TableMainForm: React.FunctionComponent<ITableControlProps> = (props:ITable
   // column with choices props
   const choiceColProps = {
     width:
-      small   ? 92 :
-      medium  ? 96 :
-      large   ? 100 :
-      xlarge  ? 108 :
+      small   ? 86 :
+      medium  ? 92 :
+      large   ? 96 :
+      xlarge  ? 100 :
       xxlarge ? 118 : 126,
     resizable: small ? false : true,
     editable: true,
@@ -476,7 +471,7 @@ const TableMainForm: React.FunctionComponent<ITableControlProps> = (props:ITable
     width:
       small   ? 140:
       medium  ? 160:
-      large   ? 180 :
+      large   ? 172 :
       xlarge  ? 198 :
       xxlarge ? 208 : 212,
     resizable: small ? false : true,
@@ -764,42 +759,79 @@ const TableInputControl: React.FunctionComponent<ITableControlProps> = (props:IT
 
 const TableDateControl: React.FunctionComponent<ITableControlProps> = (props:ITableControlProps) => {
   // date context
-  const {date: dateValue}: {date: Date} = React.useContext(DateContext);
+  const {date, setDate}: {date: Date|null, setDate:React.Dispatch<React.SetStateAction<null|Date>> } = React.useContext(DateContext);
   // state
-  const [controlMode, setControlMode] = React.useState<string>("new");
+  const [period, setPeriod] = React.useState({week: "", year: ""});
   // props
-  let _totalTimeInSec = props.totalHoursInSec;
+  const _mainFormMode = props.formMode;
 
-  // effect 
+  // effect
   React.useEffect(() => {
-    let _mainFormMode = props.formMode;
+    if (_mainFormMode === "new" || date === null) {
+      let _date = new Date;
+      // set new date
+      setDate(_date);
+    }; 
+  }, [_mainFormMode]);
 
-    setControlMode(_mainFormMode);
-  },[props.formMode]);
+  // effect for period
+  React.useEffect(() => {
+    //get period
+    let [_week, _year] = getWeekAndYear(date ? date : null);
+    // set period
+    setPeriod({
+      week: _week,
+      year: _year
+    });
+  }, [date]);
+
+  // handle date selected
+  const handleDateSelected = (date: Date | null | undefined) => {
+    // do something
+    setDate(date);
+  };
+
+  // format label to show week
+  const formatLabel = (date:Date | null): string => {
+    if (date === null) {
+      return "Select date";
+    };
+    // get week and year
+    let [_week, _year] = getWeekAndYear(date);
+    return `Year: ${_year} Week: ${_week}`
+  };
 
   // date list hook
-  let datesInWeek = useGetDatesHook(dateValue ? dateValue : null);
-  let [_week, _year] = getWeekAndYear(dateValue ? dateValue : null);
+  /* let [_week, _year] = getWeekAndYear(date ? date : null); */
 
   return (
-    <Stack horizontal tokens={{ childrenGap: 7, padding: 2 }}>
+    <Stack horizontal tokens={{ childrenGap: 7, padding: 2 }} horizontalAlign={"center"}>
       {
-        controlMode === "new" &&
+        _mainFormMode === "new" &&
         <>
-          <DateInput/>
-          {/* <StackItem align={"end"}>
-            <Label>
-              Total Time Spent : {`${secondsToHours(_totalTimeInSec)} Hours`}
-            </Label> 
-          </StackItem> */}
+          <DatePicker
+            value={date}
+            initialPickerDate={date ? date : new Date()}
+            label={formatLabel(date)}
+            firstDayOfWeek={DayOfWeek.Monday}
+            highlightSelectedMonth={true}
+            showWeekNumbers={true}
+            firstWeekOfYear={FirstWeekOfYear.FirstDay}
+            showMonthPickerAsOverlay={true}
+            placeholder="Select a date..."
+            ariaLabel="Select a date"
+            onSelectDate={handleDateSelected}
+            minDate={new Date(2019, 11, 1)}
+            maxDate={new Date(2021, 12, 31)}
+          />
         </>
       }
       {
-        controlMode === "edit" &&
+        _mainFormMode === "edit" &&
         <>
-        {dateValue &&
+        {date &&
           <Label>
-            Week {_week} Year {_year}
+            Week {period.week} Year {period.year}
           </Label>
         }
         </>
@@ -938,7 +970,7 @@ const TableDraftControl: React.FunctionComponent<ITableDraftControlProps> = (pro
   };
 
   return(
-    <>
+    <Stack horizontal tokens={{ childrenGap: 7, padding: 2 }} horizontalAlign={"center"}>
     {
       draftObj.state && formMode === "new" ? 
       <StackItem>
@@ -949,14 +981,24 @@ const TableDraftControl: React.FunctionComponent<ITableDraftControlProps> = (pro
       </StackItem> :
       null
     }
-    </>
+    </Stack>
   )
 };
 
 const TableBackControl: React.FunctionComponent<ITableControlProps> = (props:ITableControlProps) => {
+
+  // context 
+  const {setDate}: {setDate:React.Dispatch<React.SetStateAction<null|Date>> } = React.useContext(DateContext);
   // return button only if edit mode and a prop to set draft page is set
   let formMode = props.formMode;
   let setDraftPageState = props.setDraftPageState;
+
+  // handlers
+  const handleBackClicked = () => {
+    setDraftPageState("list");
+    // null date
+    setDate(null);
+  };
 
   return (
     <>
@@ -966,7 +1008,7 @@ const TableBackControl: React.FunctionComponent<ITableControlProps> = (props:ITa
         <PrimaryButton
           text={"Back"}
           iconProps={{iconName:"ChromeBack"}}
-          onClick={() => setDraftPageState("list")}
+          onClick={handleBackClicked}
           styles={stylesDanger}
         />
       </StackItem> :
