@@ -3,6 +3,7 @@ import { MessageBar, MessageBarType } from "office-ui-fabric-react";
 
 interface INotificationProps {
   show: boolean;
+  setShow: React.Dispatch<React.SetStateAction<boolean>>;
   msg: string;
   barType: MessageBarType;
 }
@@ -10,10 +11,10 @@ interface INotificationProps {
 const NotificationBar: React.FunctionComponent<INotificationProps> = (
   props: INotificationProps
 ) => {
-  let { show, msg, barType } = props;
+  let { show, setShow, msg, barType } = props;
 
-  // notification state
-  const [visible, setShow] = React.useState(show ? show : false);
+/*   // notification state
+  const [visible, setVisible] = React.useState(show ? show : false); */
   // handle dismiss
   const onDismiss = () => {
     setShow(false);
@@ -21,7 +22,7 @@ const NotificationBar: React.FunctionComponent<INotificationProps> = (
 
   return (
     <>
-      {visible && (
+      {show && (
         <MessageBar
           messageBarType={barType}
           isMultiline={false}

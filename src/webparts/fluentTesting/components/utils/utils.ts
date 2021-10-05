@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { getWeek, getYear } from 'date-fns';
 import { IUserWeek } from '../sampleData';
+import { IComponentStyles } from '@uifabric/foundation';
 
 export const stylesDanger = {
   root: [
@@ -19,10 +20,16 @@ export const stylesDanger = {
         },
       }
     }
+  ],
+  rootHovered: [
+    {
+      background: "#b70e0e",
+      border: "0px solid black",
+    }
   ]
 };
 
-const styles = props => ({
+const styles = (props) => ({
   root: [
     {
       background: props.theme.palette.themePrimary,
@@ -113,7 +120,6 @@ const objHasProperty = (list: string[], rowData: object): [boolean, string] => {
 
   return [_valid, _msg];
 };
-
 
 /**
 * gets the week and year from a date object

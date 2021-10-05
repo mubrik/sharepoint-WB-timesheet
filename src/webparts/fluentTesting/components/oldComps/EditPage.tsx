@@ -187,6 +187,7 @@ const EditPage:React.FunctionComponent<IProps> = (props:IProps) => {
             barType={MessageBarType.success}
             msg={"Sheet Updated Successfully"}
             show={notification}
+            setShow={setNotification}
           />
         }
         <PrimaryButton text={"Update Draft"} onClick={handleSaveClick} disabled={!validState.state || isLoading}/>

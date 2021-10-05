@@ -795,6 +795,8 @@ const TableInputControl: React.FunctionComponent<ITableControlProps> = (
     props.api.setRowData([]);
     // set number of rows to 0
     setRowNum(0);
+    // set selected arrays to empty list
+    props.setRowSelected([]);
   };
 
   return (
@@ -1032,12 +1034,6 @@ const TableSaveControl: React.FunctionComponent<ITableControlProps> = (
     });
   };
 
-  // testing, handle reset form
-  /* const handleResetClick = () => {
-    // simply set row data to empty obj
-    props.api.setRowData([]);
-  }; */
-
   return (
     <StackItem align={"start"}>
       {isLoading && <ProgressIndicator label={labelMsg} />}
@@ -1045,6 +1041,7 @@ const TableSaveControl: React.FunctionComponent<ITableControlProps> = (
         <NotificationBar
           barType={MessageBarType.success}
           show={notification}
+          setShow={setNotification}
           msg={notificationMsg}
         />
       )}

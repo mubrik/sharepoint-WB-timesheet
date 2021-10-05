@@ -250,6 +250,7 @@ const NewProjectPage: React.FunctionComponent<IProps> = (props: IProps) => {
             <NotificationBar
               barType={MessageBarType.success}
               show={notification}
+              setShow={setNotification}
               msg={"Sheet Updated Successfully"}
             />
           }
