@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { getWeek, getYear } from 'date-fns'
+import { getWeek, getYear } from 'date-fns';
 import { IUserWeek } from '../sampleData';
 
 export const stylesDanger = {
@@ -43,9 +43,9 @@ function getRandomInt(max: number): number {
   return Math.floor(Math.random() * max);
 };
 // delay function, returns promise
-function delay(t:number, v:IUserWeek): Promise<IUserWeek> {
-  return new Promise(function(resolve) { 
-      setTimeout(resolve.bind(null, v), t)
+function delay(t: number, v: IUserWeek): Promise<IUserWeek> {
+  return new Promise(function (resolve) {
+    setTimeout(resolve.bind(null, v), t);
   });
 };
 
@@ -68,8 +68,8 @@ function weekToDate(year: number, week: number, firstDayofWeek: number = 1): Dat
 * @param  {number} value - value to get time details from
 *     
 */
-const valueToSeconds = (value:number):number => {
-  
+const valueToSeconds = (value: number): number => {
+
   // if 0
   if (value === 0) {
     return 0;
@@ -80,7 +80,7 @@ const valueToSeconds = (value:number):number => {
   if (_stringValue.length <= 2) {
     return value * 3600;
   };
-  
+
   if (_stringValue.length === 3) {
     let [_hours, _minutes] = _stringValue.split(".");
 
@@ -103,7 +103,7 @@ const objHasProperty = (list: string[], rowData: object): [boolean, string] => {
   let _msg = "";
   // iterate cols
   for (const columnIndex in list) {
-    
+
     if (!(list[columnIndex] in rowData)) {
       _valid = false;
       _msg = `${list[columnIndex]} is missing`;
@@ -129,12 +129,12 @@ const getWeekAndYear = (param: Date): [string, string] => {
   let _year = 0;
 
   // get week
-  _week = getWeek(param, {weekStartsOn: 1});
+  _week = getWeek(param, { weekStartsOn: 1 });
 
   // get year
   _year = getYear(param);
 
   return [_week.toString(), _year.toString()];
-}
+};
 
-export {getRandomInt, delay, weekToDate, valueToSeconds, objHasProperty, getWeekAndYear};
+export { getRandomInt, delay, weekToDate, valueToSeconds, objHasProperty, getWeekAndYear };

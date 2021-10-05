@@ -10,8 +10,8 @@ import {Label, Stack, StackItem,
 import { GridApi} from "@ag-grid-community/all-modules";
 // forms
 import TableForm from './TableForm';
-import {DateInput} from './PeriodInput';
-import EditPage from "../draft/EditPage";
+import {DateInput} from "./PeriodInput";
+import EditPage from "./EditPage";
 import NotificationBar from '../utils/NotificationBar';
 // types
 import { IUserWeekData, IUserWeek} from "../sampleData";

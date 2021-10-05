@@ -29,7 +29,7 @@ export const projectOptions: string[] = [
   "Service Desk Ticket Management",
   "Service Management Tasks",
   "Troubleshooting",
-]
+];
 
 export const locationOptions: string[] = [
   "HQ",
@@ -62,4 +62,4 @@ export const taskOptions: string[] = [
   "SolMan",
   "DFM carve out",
   "Others",
-]
+];

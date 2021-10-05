@@ -18,11 +18,11 @@ import 'ag-grid-community/dist/styles/ag-theme-alpine.css';
 // option tables
 import {projectOptions, taskOptions,
    locationOptions
-} from "./optionSelect";
+} from "../form/optionSelect";
 // sampleData and types
 import { IUserWeek, IUserWeekData  } from '../sampleData';
 // time column editor
-import TimeEditor, {timeValueFormatter} from './customCellEditor';
+import TimeEditor, {timeValueFormatter} from '../form/customCellEditor';
 // hooks
 import {useGetDatesHook} from "../utils/reactHooks";
 // utils

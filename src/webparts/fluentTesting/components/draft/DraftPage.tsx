@@ -1,25 +1,26 @@
 import * as React from 'react';
 // react context
-import {StoreData, IState, DateContext,TableDataContext} from "../FluentTesting";
+import { StoreData, IState, DateContext, TableDataContext } from "../FluentTesting";
 // UI
-import { Icon, FocusZone,
+import {
+  Icon, FocusZone,
   FocusZoneDirection, TextField,
   List, IColumn, DetailsList,
   ITheme, mergeStyleSets,
   getTheme, getFocusStyle,
-  StackItem, Stack, 
+  StackItem, Stack,
   Dropdown, IDropdownOption,
   Spinner, SelectionMode, DetailsRow,
   GroupedList, IGroup, DetailsListLayoutMode
 } from 'office-ui-fabric-react';
 // components
-import EditPage from './EditPage';
+import EditPage from '../oldComps/EditPage';
 import TablePage from '../form/TablePage';
-import DraftDialog from '../utils/DraftDialog';
+import DraftDialog from "./DraftDialog";
 // sample data types
 import { IUserWeek, IUserWeeks, IUserYear, draftGroupList, IUserWeekData } from '../sampleData';
 // utils
-import {weekToDate} from "../utils/utils";
+import { weekToDate } from "../utils/utils";
 // theming
 const theme: ITheme = getTheme();
 const { palette, semanticColors, fonts } = theme;
@@ -80,43 +81,43 @@ interface IInitialState {
   status: string;
 }
 
-const initialState:IInitialState = {
+const initialState: IInitialState = {
   2020: [],
   2021: [],
   full: [],
   status: "idle"
 }
 
-const DraftPage: React.FunctionComponent<IDraftProps> = (props:IDraftProps) => {
+const DraftPage: React.FunctionComponent<IDraftProps> = (props: IDraftProps) => {
 
   // react context
-  const {data:storeData}:{data: IState} = React.useContext(StoreData);
-  const {date, setDate}: {date: Date|null, setDate:React.Dispatch<React.SetStateAction<null|Date>> } = React.useContext(DateContext);
-  const {setTableData}: {setTableData:React.Dispatch<React.SetStateAction<IUserWeekData[] | []>>} = React.useContext(TableDataContext);
+  const { data: storeData }: { data: IState } = React.useContext(StoreData);
+  const { date, setDate }: { date: Date | null, setDate: React.Dispatch<React.SetStateAction<null | Date>> } = React.useContext(DateContext);
+  const { setTableData }: { setTableData: React.Dispatch<React.SetStateAction<IUserWeekData[] | []>> } = React.useContext(TableDataContext);
 
   // controlled states
   const [year, setYear] = React.useState<null | IDropdownOption>(null);
   const [statusFilter, setStatusFilter] = React.useState<null | IDropdownOption>(null);
   const [pageState, setPageState] = React.useState<string>("list");
-  const [editItem, setEditItem] = React.useState<IUserWeek|null>(null);
+  const [editItem, setEditItem] = React.useState<IUserWeek | null>(null);
   // list data, data list should be async set in production
   const [draftData, setDraftData] = React.useState<IInitialState>(initialState);
-  const [draftDialog, setDraftDialog] = React.useState({hidden: true, data: null});
+  const [draftDialog, setDraftDialog] = React.useState({ hidden: true, data: null });
   const [shownItems, setShownItems] = React.useState<null | IUserWeek[]>(null);
 
   // year keys
   const controlledYear = [
-    {key: "2020", text: "2020"},
-    {key: "2021", text: "2021"},
-    {key: "full", text: "All"},
+    { key: "2020", text: "2020" },
+    { key: "2021", text: "2021" },
+    { key: "full", text: "All" },
   ];
 
   // status filter keys
   const controlledStatus = [
-    {key: "draft", text: "Draft"},
-    {key: "pending", text: "Pending"},
-    {key: "approved", text: "Approved"},
-    {key: "full", text: "All"},
+    { key: "draft", text: "Draft" },
+    { key: "pending", text: "Pending" },
+    { key: "approved", text: "Approved" },
+    { key: "full", text: "All" },
   ];
 
   // column for list
@@ -169,7 +170,7 @@ const DraftPage: React.FunctionComponent<IDraftProps> = (props:IDraftProps) => {
     (nestingDepth?: number, item?: IUserWeek, itemIndex?: number, group?: IGroup): React.ReactNode => {
       /* console.log(group, item) */
       return (
-        <div/>
+        <div />
       )
     },
     [columns],
@@ -180,11 +181,11 @@ const DraftPage: React.FunctionComponent<IDraftProps> = (props:IDraftProps) => {
     if (year === null) {
       if (storeData.status === "loaded") {
         // get data from different year and make a list
-        let weeksIn2020:IUserWeek[] = [];
-        let weeksIn2021:IUserWeek[] = [];
+        let weeksIn2020: IUserWeek[] = [];
+        let weeksIn2021: IUserWeek[] = [];
         // objects with data
-        let _data20:IUserWeeks = storeData.data["2020"];
-        let _data21:IUserWeeks = storeData.data["2021"];
+        let _data20: IUserWeeks = storeData.data["2020"];
+        let _data21: IUserWeeks = storeData.data["2021"];
         // loop 2020 keys
         Object.keys(_data20).forEach((key) => {
           weeksIn2020.push(_data20[key]);
@@ -194,7 +195,7 @@ const DraftPage: React.FunctionComponent<IDraftProps> = (props:IDraftProps) => {
           weeksIn2021.push(_data21[key]);
         });
         // concat
-        let fullWeeksArray:IUserWeek[] = weeksIn2020.concat(weeksIn2021);
+        let fullWeeksArray: IUserWeek[] = weeksIn2020.concat(weeksIn2021);
 
         // set data
         setDraftData((oldData) => {
@@ -223,7 +224,7 @@ const DraftPage: React.FunctionComponent<IDraftProps> = (props:IDraftProps) => {
     // set year
     setYear(item);
     // set items
-    let arrayToSet:Array<IUserWeek> = draftData[item.key];
+    let arrayToSet: Array<IUserWeek> = draftData[item.key];
 
     if (arrayToSet.length === 0) {
       setShownItems(null);
@@ -238,7 +239,7 @@ const DraftPage: React.FunctionComponent<IDraftProps> = (props:IDraftProps) => {
     // status string
     let _status = item.key;
     // working data
-    let _arrayToFilter:IUserWeek[] = year ? draftData[year.key] : draftData["full"];
+    let _arrayToFilter: IUserWeek[] = year ? draftData[year.key] : draftData["full"];
     if (_status === "full") {
       setShownItems(draftData["full"]);
       return;
@@ -257,12 +258,12 @@ const DraftPage: React.FunctionComponent<IDraftProps> = (props:IDraftProps) => {
       data: weekData
     });
   };
-  
+
   // filter
   const handleFilterChanged = (_: any, text: string): void => {
 
     // working data
-    let _arrayToFilter:IUserWeek[] = year ? draftData[year.key] : draftData["full"];
+    let _arrayToFilter: IUserWeek[] = year ? draftData[year.key] : draftData["full"];
 
     // filter by week
     setShownItems(_arrayToFilter.filter(weekItem => {
@@ -274,7 +275,7 @@ const DraftPage: React.FunctionComponent<IDraftProps> = (props:IDraftProps) => {
   // function to render a single list item
   const onRenderCell = (item: IUserWeek, index: number | undefined): JSX.Element => {
 
-    return(
+    return (
       <div className={classNames.itemCell} data-is-focusable={true} onClick={() => handleListItemClick(item)}>
         <div className={classNames.itemContent}>
           <div className={classNames.itemName}>{`Week: ${item.week}`}</div>
@@ -286,39 +287,39 @@ const DraftPage: React.FunctionComponent<IDraftProps> = (props:IDraftProps) => {
     );
   };
 
-  return(
+  return (
     <Stack tokens={{ childrenGap: 7, padding: 2 }}>
       {
         pageState === "list" &&
         <>
-        {
-          !draftDialog.hidden && 
-          <DraftDialog
-            hidden={draftDialog.hidden}
-            setPageState={setPageState}
-            setDraftDialog={setDraftDialog}
-            weekData={draftDialog.data}
-          />
-        }
-        <Stack horizontal tokens={{ childrenGap: 10, padding: 8 }}>
-          <StackItem>
-            <Dropdown
-              selectedKey={year ? year.key : "full"}
-              label="Select a Year"
-              options={controlledYear}
-              onChange={handleYearChanged}
+          {
+            !draftDialog.hidden &&
+            <DraftDialog
+              hidden={draftDialog.hidden}
+              setPageState={setPageState}
+              setDraftDialog={setDraftDialog}
+              weekData={draftDialog.data}
             />
-          </StackItem>
-          <StackItem>
-            <TextField
-              label={'Filter by Week'}
-              onChange={handleFilterChanged}
-              type={"number"}
-              min={0}
-              max={53}
-            />
-          </StackItem>
-          {/* <StackItem>
+          }
+          <Stack horizontal tokens={{ childrenGap: 10, padding: 8 }}>
+            <StackItem>
+              <Dropdown
+                selectedKey={year ? year.key : "full"}
+                label="Select a Year"
+                options={controlledYear}
+                onChange={handleYearChanged}
+              />
+            </StackItem>
+            <StackItem>
+              <TextField
+                label={'Filter by Week'}
+                onChange={handleFilterChanged}
+                type={"number"}
+                min={0}
+                max={53}
+              />
+            </StackItem>
+            {/* <StackItem>
             <Dropdown
               selectedKey={statusFilter ? statusFilter.key : "full"}
               label={"Filter Status"}
@@ -326,17 +327,17 @@ const DraftPage: React.FunctionComponent<IDraftProps> = (props:IDraftProps) => {
               onChange={handleStatusChanged}
             />
           </StackItem> */}
-        </Stack>
-        <Stack>
-          {shownItems && 
-          <FocusZone direction={FocusZoneDirection.vertical}>
-            <List items={shownItems} onRenderCell={onRenderCell} />
-            {/* <GroupedList
+          </Stack>
+          <Stack>
+            {shownItems &&
+              <FocusZone direction={FocusZoneDirection.vertical}>
+                <List items={shownItems} onRenderCell={onRenderCell} />
+                {/* <GroupedList
               items={shownItems}
               onRenderCell={onRenderGroupRow}
               groups={draftGroupList}
             /> */}
-            {/* <DetailsList
+                {/* <DetailsList
               items={shownItems}
               columns={columns}
               isHeaderVisible={true}
@@ -350,26 +351,26 @@ const DraftPage: React.FunctionComponent<IDraftProps> = (props:IDraftProps) => {
                 </div>)
               }}
             /> */}
-          </FocusZone>
-          }
+              </FocusZone>
+            }
 
-          {
-            !shownItems && 
-            <>
-              <Spinner label={"Loading User Data"} ariaLive="assertive" labelPosition="top"></Spinner>
-            </>
-          }
-        </Stack>
-      </>
+            {
+              !shownItems &&
+              <>
+                <Spinner label={"Loading User Data"} ariaLive="assertive" labelPosition="top"></Spinner>
+              </>
+            }
+          </Stack>
+        </>
       }
 
       {
-        pageState === "edit" && 
+        pageState === "edit" &&
         <>
-        <TablePage
-          mode={"edit"}
-          setDraftPage={setPageState}
-        />
+          <TablePage
+            mode={"edit"}
+            setDraftPage={setPageState}
+          />
         </>
       }
     </Stack>

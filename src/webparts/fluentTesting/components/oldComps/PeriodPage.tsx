@@ -1,7 +1,7 @@
 import * as React from 'react';
-import {periodPageProps} from "./IPeriodProps"
-import PeriodInput from "./PeriodInput"
-import { useMediaQuery } from 'react-responsive'
+import {periodPageProps} from "./period/IPeriodProps";
+import PeriodInput from "./period/PeriodInput";
+import { useMediaQuery } from 'react-responsive';
 import { Stack } from '@microsoft/office-ui-fabric-react-bundle';
 /* import RenderProjectList from './ProjectList'; */
 

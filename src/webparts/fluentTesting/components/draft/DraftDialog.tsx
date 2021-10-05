@@ -1,35 +1,55 @@
 import * as React from "react";
-import {Dialog, DialogType, DialogFooter,
-  PrimaryButton, DefaultButton
-} from 'office-ui-fabric-react';
-import { IUserWeek,
-  IUserWeekData
-} from "../sampleData";
+import {
+  Dialog,
+  DialogType,
+  DialogFooter,
+  PrimaryButton,
+  DefaultButton,
+} from "office-ui-fabric-react";
+import { IUserWeek, IUserWeekData } from "../sampleData";
 // react context
-import {StoreData, IState, DateContext,TableDataContext} from "../FluentTesting";
-import { weekToDate } from "./utils";
+import {
+  StoreData,
+  IState,
+  DateContext,
+  TableDataContext,
+} from "../FluentTesting";
+import { weekToDate } from "../utils/utils";
 
 const dialogContentProps = {
   type: DialogType.largeHeader,
-  title: 'Missing Subject',
-  closeButtonAriaLabel: 'Close',
-  subText: 'Do you want to send this message without a subject?',
+  title: "Missing Subject",
+  closeButtonAriaLabel: "Close",
+  subText: "Do you want to send this message without a subject?",
 };
 
 interface IDialogProps {
   hidden: boolean;
-  weekData:IUserWeek;
+  weekData: IUserWeek;
   setPageState: (value: React.SetStateAction<string>) => void;
   setDraftDialog: React.Dispatch<React.SetStateAction<any>>;
 }
 
-const DraftDialog:React.FunctionComponent<IDialogProps>  = (props:IDialogProps) => {
-
+const DraftDialog: React.FunctionComponent<IDialogProps> = (
+  props: IDialogProps
+) => {
   // dialog state
-  const [dialogData, setDialogData] = React.useState({title:"", subText:"", weekData: props.weekData, type: DialogType.largeHeader,});
+  const [dialogData, setDialogData] = React.useState({
+    title: "",
+    subText: "",
+    weekData: props.weekData,
+    type: DialogType.largeHeader,
+  });
   // context data
-  const {setDate}: {setDate:React.Dispatch<React.SetStateAction<null|Date>> } = React.useContext(DateContext);
-  const {setTableData}: {setTableData:React.Dispatch<React.SetStateAction<IUserWeekData[] | []>>} = React.useContext(TableDataContext);
+  const {
+    setDate,
+  }: { setDate: React.Dispatch<React.SetStateAction<null | Date>> } =
+    React.useContext(DateContext);
+  const {
+    setTableData,
+  }: {
+    setTableData: React.Dispatch<React.SetStateAction<IUserWeekData[] | []>>;
+  } = React.useContext(TableDataContext);
 
   //effect for setting data
   React.useEffect(() => {
@@ -44,12 +64,11 @@ const DraftDialog:React.FunctionComponent<IDialogProps>  = (props:IDialogProps) 
           ...oldData,
           title: `Draft for week ${_weekData.week} year ${_weekData.year}`,
           subText: `Draft is currently ${_weekData.status}`,
-          weekData: _weekData
-        }
+          weekData: _weekData,
+        };
       });
-    };
-
-  },[props.hidden]);
+    }
+  }, [props.hidden]);
 
   // handlers
   // handle open
@@ -70,16 +89,16 @@ const DraftDialog:React.FunctionComponent<IDialogProps>  = (props:IDialogProps) 
       return {
         ...oldData,
         hidden: true,
-      }
+      };
     });
   };
   // handle dismiss
   const handleDismiss = () => {
     // update state to dismiss
-    props.setDraftDialog({hidden: true, data: null});
+    props.setDraftDialog({ hidden: true, data: null });
   };
 
-  return(
+  return (
     <>
       <Dialog
         hidden={props.hidden}
@@ -88,9 +107,9 @@ const DraftDialog:React.FunctionComponent<IDialogProps>  = (props:IDialogProps) 
         minWidth={"320"}
       >
         <DialogFooter>
-          <PrimaryButton text={"Open Draft"} onClick={handleDraftOpen}/>
-          <PrimaryButton text={"Send Approval"}/>
-          <DefaultButton text={"Cancel"} onClick={handleDismiss}/>
+          <PrimaryButton text={"Open Draft"} onClick={handleDraftOpen} />
+          <PrimaryButton text={"Send Approval"} />
+          <DefaultButton text={"Cancel"} onClick={handleDismiss} />
         </DialogFooter>
       </Dialog>
     </>

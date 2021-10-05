@@ -1,20 +1,20 @@
 import * as React from 'react';
-import { eachDayOfInterval, startOfWeek, endOfWeek } from 'date-fns'
+import { eachDayOfInterval, startOfWeek, endOfWeek } from 'date-fns';
 
 
 const useGetDatesHook = (dateObj: Date | null): Date[] | null => {
 
   if (dateObj === null) {
-    return null
+    return null;
   };
 
   // get start and end date
-  let startWeek = startOfWeek(dateObj, {weekStartsOn: 1});
-  let endWeek = endOfWeek(dateObj, {weekStartsOn: 1});
+  let startWeek = startOfWeek(dateObj, { weekStartsOn: 1 });
+  let endWeek = endOfWeek(dateObj, { weekStartsOn: 1 });
 
   // get array of dates
   let dateArray = eachDayOfInterval({
-    start:startWeek,
+    start: startWeek,
     end: endWeek
   });
 
@@ -22,4 +22,4 @@ const useGetDatesHook = (dateObj: Date | null): Date[] | null => {
 
 };
 
-export {useGetDatesHook};
+export { useGetDatesHook };

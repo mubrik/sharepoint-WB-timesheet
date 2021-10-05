@@ -1,45 +1,57 @@
-import * as React from 'react';
+import * as React from "react";
 // context data
-import { DateContext, TableDataContext } from '../FluentTesting';
-import {IAction, StoreData, IState} from "../FluentTesting";
+import { DateContext, TableDataContext } from "../FluentTesting";
+import { IAction, StoreData, IState } from "../FluentTesting";
 // UI
-import { PrimaryButton, Stack, 
-  StackItem, Label,
-  ProgressIndicator, MessageBarType,
+import {
+  PrimaryButton,
+  Stack,
+  StackItem,
+  Label,
+  ProgressIndicator,
+  MessageBarType,
   DatePicker,
-  DayOfWeek, FirstWeekOfYear
-} from 'office-ui-fabric-react';
-import {stylesDanger} from "../utils/utils";
+  Text,
+  DayOfWeek,
+  FirstWeekOfYear,
+} from "office-ui-fabric-react";
+import { stylesDanger } from "../utils/utils";
 // grid imports
-import { 
-  GridReadyEvent, GridApi,
-  ColumnApi, AllCommunityModules, 
-  RowSelectedEvent, CellValueChangedEvent,
-  VirtualRowRemovedEvent
+import {
+  GridReadyEvent,
+  GridApi,
+  ColumnApi,
+  AllCommunityModules,
+  RowSelectedEvent,
+  CellValueChangedEvent,
+  VirtualRowRemovedEvent,
 } from "@ag-grid-community/all-modules";
-import { AgGridReact, AgGridColumn} from "@ag-grid-community/react";
-import { useMediaQuery } from 'react-responsive';
+import { AgGridReact, AgGridColumn } from "@ag-grid-community/react";
+import { useMediaQuery } from "react-responsive";
 import "@ag-grid-community/client-side-row-model";
-import 'ag-grid-community/dist/styles/ag-grid.css';
-import 'ag-grid-community/dist/styles/ag-theme-alpine.css';
-import 'ag-grid-community/dist/styles/ag-theme-balham.css';
+import "ag-grid-community/dist/styles/ag-grid.css";
+import "ag-grid-community/dist/styles/ag-theme-alpine.css";
+import "ag-grid-community/dist/styles/ag-theme-balham.css";
 // option tables
-import {projectOptions, taskOptions,
-   locationOptions
-} from "./optionSelect";
+import { projectOptions, taskOptions, locationOptions } from "./optionSelect";
 // sampleData and types
-import { IUserWeek, IUserWeekData  } from '../sampleData';
+import { IUserWeek, IUserWeekData } from "../sampleData";
 // time column editor
-import TimeEditor, {timeValueFormatter} from './customCellEditor';
+import TimeEditor, { timeValueFormatter } from "./customCellEditor";
 // hooks
-import {useGetDatesHook} from "../utils/reactHooks";
+import { useGetDatesHook } from "../utils/reactHooks";
 // utils
-import {valueToSeconds, objHasProperty, 
-  getWeekAndYear, getRandomInt, delay,
-  weekToDate
+import {
+  valueToSeconds,
+  objHasProperty,
+  getWeekAndYear,
+  getRandomInt,
+  delay,
+  weekToDate,
 } from "../utils/utils";
-import { secondsToHours } from 'date-fns';
-import NotificationBar from '../utils/NotificationBar';
+import { secondsToHours } from "date-fns";
+import NotificationBar from "../utils/NotificationBar";
+import ResponsivePrimaryButton from "../utils/ResponsiveButton";
 import * as XLSX from "xlsx";
 
 export interface IProps {
@@ -52,30 +64,43 @@ const Validation = React.createContext(null);
 const initialValidState = {
   formState: false,
   msg: "",
-  tableState: {state: false, msg: ""},
+  tableState: { state: false, msg: "" },
 };
-const initialDraftState: {state:boolean, draft: IUserWeek|{}} = {
+const initialDraftState: { state: boolean; draft: IUserWeek | {} } = {
   state: false,
-  draft: {}
+  draft: {},
 };
 
-const TablePage: React.FunctionComponent<IProps> = (props: IProps)  => {
+const TablePage: React.FunctionComponent<IProps> = (props: IProps) => {
   // props to be used
   let _mode = props.mode;
   // date, tabledata and storedata context
-  const {tableData, setTableData}: {tableData: IUserWeekData[]|[], setTableData:React.Dispatch<React.SetStateAction<IUserWeekData[]|[]>>} = React.useContext(TableDataContext);
-  const {data:storeData}:{data: IState} = React.useContext(StoreData);
-  const {date:dateValue}: {date: Date} = React.useContext(DateContext);
+  const {
+    tableData,
+    setTableData,
+  }: {
+    tableData: IUserWeekData[] | [];
+    setTableData: React.Dispatch<React.SetStateAction<IUserWeekData[] | []>>;
+  } = React.useContext(TableDataContext);
+  const { data: storeData }: { data: IState } = React.useContext(StoreData);
+  const { date: dateValue }: { date: Date } = React.useContext(DateContext);
   // states
   const [formMode, setFormMode] = React.useState<string>(_mode || "new");
-  const [totalHoursInSec, setTotalHoursInSec] = React.useState<number|null>(0);
+  const [totalHoursInSec, setTotalHoursInSec] = React.useState<number | null>(
+    0
+  );
   const [hasDraft, setHasDraft] = React.useState(initialDraftState);
   // validation state, memo validation value to ease rerender
   const [validState, setValidState] = React.useState(initialValidState);
-  const validationValue = React.useMemo(() => ({validState, setValidState}),[validState]);
+  const validationValue = React.useMemo(
+    () => ({ validState, setValidState }),
+    [validState]
+  );
   // exposing grid and column api
   const [gridApi, setGridApi] = React.useState<null | GridApi>(null);
-  const [gridColumnApi, setGridColumnApi] = React.useState<null | ColumnApi>(null);
+  const [gridColumnApi, setGridColumnApi] = React.useState<null | ColumnApi>(
+    null
+  );
   // track row selection
   const [rowSelected, setRowSelected] = React.useState<number[]>([]);
 
@@ -95,7 +120,7 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps)  => {
     if (gridApi && formMode === "edit") {
       calculateTotalTime();
     }
-  },[gridApi, formMode]);
+  }, [gridApi, formMode]);
 
   // validation effect
   React.useEffect(() => {
@@ -105,26 +130,25 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps)  => {
         return {
           ...oldState,
           formState: false,
-          msg: "Select a Date"
-        }
+          msg: "Select a Date",
+        };
       });
 
       return;
-    };
+    }
 
     // if time over value
     if (totalHoursInSec > 259200) {
-
       setValidState((oldState) => {
         return {
           ...oldState,
           formState: false,
-          msg: "Hours cant be over 72"
-        }
+          msg: "Hours cant be over 72",
+        };
       });
 
       return;
-    };
+    }
 
     // table validation
     if (!validState.tableState.state) {
@@ -132,8 +156,8 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps)  => {
         return {
           ...oldState,
           formState: false,
-          msg: oldState.tableState.msg
-        }
+          msg: oldState.tableState.msg,
+        };
       });
 
       return;
@@ -144,29 +168,26 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps)  => {
       return {
         ...oldState,
         formState: true,
-        msg: ""
-      }
+        msg: "",
+      };
     });
-
-
   }, [dateValue, totalHoursInSec, validState.tableState]);
 
   // draft checker effect
   React.useEffect(() => {
     // checks if selected period has an available draft
     if (dateValue === null) return;
-    // get week and year 
+    // get week and year
     let [_week, _year] = getWeekAndYear(dateValue);
-    console.log(_week, _year)
+    console.log(_week, _year);
     // store has year
     if (storeData.status === "loaded") {
       if (_year in storeData.data && _week in storeData.data[_year]) {
         setHasDraft({
           state: true,
-          draft: storeData.data[_year][_week]
+          draft: storeData.data[_year][_week],
         });
       }
-      
     }
     /* if (_year in storeData.data && _week in storeData.data[_year]) {
       setHasDraft({
@@ -174,15 +195,22 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps)  => {
         draft: storeData[_year][_week]
       });
     } */
+  }, [dateValue]);
 
-  },[dateValue]);
-  
   // just a list of stuff
-  const weekDays = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+  const weekDays = [
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+    "sunday",
+  ];
   const arrToValidate = ["Project", "Task"];
-  
+
   // exposes grid api on grid ready event
-  const handleGridReady = (event:GridReadyEvent) => {
+  const handleGridReady = (event: GridReadyEvent) => {
     console.log("grid ready");
     setGridApi(event.api);
     setGridColumnApi(event.columnApi);
@@ -192,51 +220,53 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps)  => {
       setValidState((oldState) => {
         return {
           ...oldState,
-          tableState: {state: false,
-            msg: "Add a row"
-          },
-        }
+          tableState: { state: false, msg: "Add a row" },
+        };
       });
     } else {
       setValidState((oldState) => {
         return {
           ...oldState,
-          tableState: {state: true,
-            msg:""
-          },
-        }
+          tableState: { state: true, msg: "" },
+        };
       });
-    };
+    }
     // testing event listeners
     // use values from event/state dispatch as event listenrs handler function doesnt have access to current state values
     // when cell value changes
-    event.api.addEventListener("cellValueChanged", (event: CellValueChangedEvent) => {
-      let eventColumn = event.colDef.field;
-      // column a in week
-      if (weekDays.includes(eventColumn)) {
-        // calculate total time
-        console.log("time cell chng")
-        calculateTotalTime(event.api);
-      } else if (arrToValidate.includes(eventColumn)) {
-        // validate entries
-        console.log("proj/task cell chng")
+    event.api.addEventListener(
+      "cellValueChanged",
+      (event: CellValueChangedEvent) => {
+        let eventColumn = event.colDef.field;
+        // column a in week
+        if (weekDays.includes(eventColumn)) {
+          // calculate total time
+          console.log("time cell chng");
+          calculateTotalTime(event.api);
+        } else if (arrToValidate.includes(eventColumn)) {
+          // validate entries
+          console.log("proj/task cell chng");
+          validateDataEntries(event.api);
+        }
+      }
+    );
+    // when row removed
+    event.api.addEventListener(
+      "virtualRowRemoved",
+      (event: VirtualRowRemovedEvent) => {
+        console.log("row removed");
         validateDataEntries(event.api);
       }
-    });
-    // when row removed
-    event.api.addEventListener("virtualRowRemoved", (event: VirtualRowRemovedEvent) => {
-      console.log("row removed");
-      validateDataEntries(event.api);
-    });
+    );
     // handle rowselected state
-    event.api.addEventListener("rowSelected", (event:RowSelectedEvent) => {
+    event.api.addEventListener("rowSelected", (event: RowSelectedEvent) => {
       // check if row is actually selected, event triggers for previousselect when switching select
       // get index
       let row = event.rowIndex;
       // if row === null, row has been removed by table input control and set row already called
       if (row === null) {
         return;
-      } 
+      }
       // if ro in array, remove it, else add it
       setRowSelected((oldRows) => {
         if (oldRows.includes(row)) {
@@ -247,11 +277,14 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps)  => {
         }
       });
     });
-    event.api.addEventListener("componentStateChanged", (event) => console.log(event));
+    event.api.addEventListener("componentStateChanged", (event) =>
+      console.log(event)
+    );
+    event.api.addEventListener("dataChanged", (event) => console.log(event));
   };
   // utils
   // calculate  total time in time cells
-  const calculateTotalTime = (api:GridApi=gridApi) => {
+  const calculateTotalTime = (api: GridApi = gridApi) => {
     // grid api
     let _gridApi = api ? api : gridApi;
     // if grid api valid
@@ -261,20 +294,20 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps)  => {
 
     _gridApi.forEachNode((rowNode, index) => {
       // get row data
-      let rowdata = {...rowNode.data}
+      let rowdata = { ...rowNode.data };
 
-      Object.keys(rowdata).forEach(colName => {
+      Object.keys(rowdata).forEach((colName) => {
         if (weekDays.includes(colName)) {
           let timeInSec = valueToSeconds(rowdata[colName]);
           totalTimeInSec += timeInSec;
-        };
+        }
       });
     });
 
     setTotalHoursInSec(totalTimeInSec);
   };
   // validate data in table
-  const validateDataEntries = (api:GridApi=gridApi):boolean => {
+  const validateDataEntries = (api: GridApi = gridApi): boolean => {
     // grid api
     let _gridApi = api ? api : gridApi;
 
@@ -285,27 +318,24 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps)  => {
     const arrToValidate = ["Project", "Task"];
     // iteration control
     let isValid = true;
-    // row number 
+    // row number
     let rowsNumber = _gridApi.getDisplayedRowCount();
 
     if (rowsNumber === 0) {
       setValidState((oldState) => {
         return {
           ...oldState,
-          tableState: {state: false,
-            msg: "Add a row"
-          },
-        }
+          tableState: { state: false, msg: "Add a row" },
+        };
       });
 
       return;
-    };
+    }
 
     _gridApi.forEachNode((rowNode, index) => {
-
       if (!isValid) return;
       // get row data
-      let rowdata = {...rowNode.data};
+      let rowdata = { ...rowNode.data };
       // row id
       let rowId = index;
       // check row data for missing fields
@@ -316,22 +346,20 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps)  => {
         setValidState((oldState) => {
           return {
             ...oldState,
-            tableState: {state: false,
-              msg: response + ` at row ${rowId + 1}`
+            tableState: {
+              state: false,
+              msg: response + ` at row ${rowId + 1}`,
             },
-          }
+          };
         });
         isValid = false;
         return isValid;
-
       } else {
         setValidState((oldState) => {
           return {
             ...oldState,
-            tableState: {state: true,
-              msg:""
-            },
-          }
+            tableState: { state: true, msg: "" },
+          };
         });
         isValid = true;
         return isValid;
@@ -340,7 +368,7 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps)  => {
 
     return isValid;
   };
-  
+
   return (
     <Validation.Provider value={validationValue}>
       <Stack tokens={{ childrenGap: 5, padding: 2 }}>
@@ -359,6 +387,7 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps)  => {
           api={gridApi}
           formMode={formMode}
           setFormMode={setFormMode}
+          validateDataEntries={validateDataEntries}
         />
         <TableMainForm
           formMode={formMode}
@@ -366,23 +395,21 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps)  => {
           onGridReady={handleGridReady}
           totalHoursInSec={totalHoursInSec}
         />
-        <Stack horizontal tokens={{ childrenGap: 9, padding: 4 }}>
-          <TableInputControl
-            formMode={formMode}
-            api={gridApi}
-            column={gridColumnApi}
-            rowSelected={rowSelected}
-            setRowSelected={setRowSelected}
-            validateDataEntries={validateDataEntries}
-            calculateTotalTime={calculateTotalTime}
-          />
-        </Stack>
-        <StackItem>
+        <TableInputControl
+          formMode={formMode}
+          api={gridApi}
+          column={gridColumnApi}
+          rowSelected={rowSelected}
+          setRowSelected={setRowSelected}
+          validateDataEntries={validateDataEntries}
+          calculateTotalTime={calculateTotalTime}
+        />
+        {/* <StackItem>
           <TableSaveControl
             formMode={formMode}
             api={gridApi}
           />
-        </StackItem>
+        </StackItem> */}
       </Stack>
     </Validation.Provider>
   );
@@ -390,8 +417,8 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps)  => {
 
 interface ITableControlProps {
   formMode: string;
-  api:GridApi | null;
-  column?:ColumnApi | null;
+  api: GridApi | null;
+  column?: ColumnApi | null;
   rowSelected?: number[];
   setRowSelected?: React.Dispatch<React.SetStateAction<number[]>>;
   validateDataEntries?: (api?: GridApi) => boolean;
@@ -403,13 +430,15 @@ interface ITableControlProps {
 
 interface ITableDraftControlProps {
   hasDraft: typeof initialDraftState;
-  api:GridApi | null;
+  api: GridApi | null;
   formMode: string;
   setFormMode: React.Dispatch<React.SetStateAction<string>>;
+  validateDataEntries?: (api?: GridApi) => boolean;
 }
 
-const TableMainForm: React.FunctionComponent<ITableControlProps> = (props:ITableControlProps) => {
-
+const TableMainForm: React.FunctionComponent<ITableControlProps> = (
+  props: ITableControlProps
+) => {
   // media queries
   const small = useMediaQuery({ maxWidth: 320 });
   const medium = useMediaQuery({ minWidth: 320, maxWidth: 479 });
@@ -421,11 +450,12 @@ const TableMainForm: React.FunctionComponent<ITableControlProps> = (props:ITable
   let _totalTimeInSec = props.totalHoursInSec;
 
   // date, tabledata and storedata context
-  const {tableData}: {tableData: IUserWeekData[]|[]} = React.useContext(TableDataContext);
-  const {date:dateValue}: {date: Date} = React.useContext(DateContext);
+  const { tableData }: { tableData: IUserWeekData[] | [] } =
+    React.useContext(TableDataContext);
+  const { date: dateValue }: { date: Date } = React.useContext(DateContext);
   // date list hook
   const selectedDates = useGetDatesHook(dateValue ? dateValue : null);
-  // check box 
+  // check box
   const checkboxSelection = function (params) {
     return params.columnApi.getRowGroupColumns().length === 0;
   };
@@ -433,152 +463,187 @@ const TableMainForm: React.FunctionComponent<ITableControlProps> = (props:ITable
     return params.columnApi.getRowGroupColumns().length === 0;
   };
   // format date column labels
-  const formatLabel = (day: string, index: number):string => {
+  const formatLabel = (day: string, index: number): string => {
     // if date is null for some reason
     if (selectedDates === null) {
-      return `${day} - `
-    };
+      return `${day} - `;
+    }
 
-    return `${day}-${selectedDates[index].toLocaleDateString()}`
+    return `${day}-${selectedDates[index].toLocaleDateString()}`;
   };
   // time column props
   const timeColProps = {
-    width:
-      small   ? 42 :
-      medium  ? 50 :
-      large   ? 54 :
-      xlarge  ? 58 :
-      xxlarge ? 64 : 68,
+    width: small
+      ? 42
+      : medium
+      ? 50
+      : large
+      ? 54
+      : xlarge
+      ? 58
+      : xxlarge
+      ? 64
+      : 68,
     resizable: small ? false : true,
     editable: true,
     cellEditor: "timeEditor",
-    valueFormatter:timeValueFormatter
+    valueFormatter: timeValueFormatter,
   };
   // column with choices props
   const choiceColProps = {
-    width:
-      small   ? 86 :
-      medium  ? 92 :
-      large   ? 96 :
-      xlarge  ? 100 :
-      xxlarge ? 118 : 126,
+    width: small
+      ? 86
+      : medium
+      ? 92
+      : large
+      ? 96
+      : xlarge
+      ? 100
+      : xxlarge
+      ? 118
+      : 126,
     resizable: small ? false : true,
     editable: true,
-    cellEditor:"agSelectCellEditor",
+    cellEditor: "agSelectCellEditor",
   };
   // column with choices props
   const activityColProps = {
-    width:
-      small   ? 140:
-      medium  ? 160:
-      large   ? 172 :
-      xlarge  ? 198 :
-      xxlarge ? 208 : 212,
+    width: small
+      ? 140
+      : medium
+      ? 160
+      : large
+      ? 172
+      : xlarge
+      ? 198
+      : xxlarge
+      ? 208
+      : 212,
     resizable: small ? false : true,
     editable: true,
-    field: "Activity Desription"
+    field: "Activity Desription",
   };
 
-  return(
+  return (
     <>
-      <div>
+      {/* <div>
         <div>{small && "is small"}</div>
         <div>{medium && "is medium"}</div>
         <div>{large && "is large"}</div>
         <div>{xlarge && "is xlarge"}</div>
         <div>{xxlarge && "is xxlarge"}</div>
         <div>{xxxlarge && "is xxxlarge"}</div>
-      </div>
-      <Stack horizontal wrap tokens={{ childrenGap: 9, padding: 2 }} horizontalAlign={"center"}>
-        {
-          selectedDates &&
-          <span><strong>Period: </strong>{selectedDates[0].toDateString()} to {selectedDates[6].toDateString()}</span>
-        }
-        <span><strong>Time Spent: </strong>{`${secondsToHours(_totalTimeInSec)} Hours`}</span>
+      </div> */}
+      <Stack
+        horizontal
+        wrap
+        tokens={{ childrenGap: 9, padding: 2 }}
+        horizontalAlign={"space-between"}
+        verticalAlign={"center"}
+      >
+        {selectedDates && (
+          <span>
+            <strong>Period: </strong>
+            {selectedDates[0].toDateString()} to{" "}
+            {selectedDates[6].toDateString()}
+          </span>
+        )}
+        <span>
+          <strong>Time Spent: </strong>
+          {`${secondsToHours(_totalTimeInSec)} Hours`}
+        </span>
+        <TableSaveControl formMode={props.formMode} api={props.api} />
       </Stack>
-      <div className={"ag-theme-balham"} style={{minHeight: 400, height:"50vh", width: "100%"}}>
+      <div
+        className={"ag-theme-balham"}
+        style={{ minHeight: 400, height: "50vh", width: "100%" }}
+      >
         <AgGridReact
           rowData={tableData}
           rowSelection="multiple"
           modules={AllCommunityModules}
           enableRangeSelection={true}
           frameworkComponents={{
-            "timeEditor" : TimeEditor
+            timeEditor: TimeEditor,
           }}
           onGridReady={props.onGridReady}
         >
           <AgGridColumn
             {...choiceColProps}
             field="Project"
-            cellEditorParams={{values: projectOptions}}
+            cellEditorParams={{ values: projectOptions }}
             checkboxSelection={checkboxSelection}
             headerCheckboxSelection={headerCheckboxSelection}
           />
           <AgGridColumn
             {...choiceColProps}
             field="Location"
-            cellEditorParams={{cellHeight: 200, values: locationOptions}}
+            cellEditorParams={{ cellHeight: 200, values: locationOptions }}
           />
           <AgGridColumn
             {...choiceColProps}
             field="Task"
-            cellEditorParams={{cellHeight: 200, values: taskOptions}}
+            cellEditorParams={{ cellHeight: 200, values: taskOptions }}
           />
-          <AgGridColumn 
+          <AgGridColumn
             {...choiceColProps}
             cellEditor={"agTextCellEditor"}
             field="FreshService ID"
           />
-          <AgGridColumn 
-            {...activityColProps}
+          <AgGridColumn {...activityColProps} />
+          <AgGridColumn
+            {...timeColProps}
+            field="monday"
+            headerName={formatLabel("Mon", 0)}
           />
           <AgGridColumn
-            {...timeColProps} 
-            field="monday" 
-            headerName={formatLabel("Mon", 0)} 
-          />
-          <AgGridColumn 
-            {...timeColProps} 
-            field="tuesday" 
-            headerName={formatLabel("Tue", 1)} 
+            {...timeColProps}
+            field="tuesday"
+            headerName={formatLabel("Tue", 1)}
           />
           <AgGridColumn
-            {...timeColProps}  
-            field="wednesday" 
-            headerName={formatLabel("Wed", 2)} 
+            {...timeColProps}
+            field="wednesday"
+            headerName={formatLabel("Wed", 2)}
           />
-          <AgGridColumn 
-            {...timeColProps} 
-            field="thursday" 
+          <AgGridColumn
+            {...timeColProps}
+            field="thursday"
             headerName={formatLabel("Thu", 3)}
           />
-          <AgGridColumn 
-            {...timeColProps} 
-            field="friday" 
+          <AgGridColumn
+            {...timeColProps}
+            field="friday"
             headerName={formatLabel("Fri", 4)}
           />
           <AgGridColumn
-            {...timeColProps} 
-            field="saturday" 
+            {...timeColProps}
+            field="saturday"
             headerName={formatLabel("Sat", 5)}
           />
           <AgGridColumn
-            {...timeColProps} 
-            field="sunday" 
+            {...timeColProps}
+            field="sunday"
             headerName={formatLabel("Sun", 6)}
           />
         </AgGridReact>
       </div>
     </>
-  )
+  );
 };
 
-const TableInputControl: React.FunctionComponent<ITableControlProps> = (props:ITableControlProps) => {
-
+const TableInputControl: React.FunctionComponent<ITableControlProps> = (
+  props: ITableControlProps
+) => {
+  // context
+  const { validState }: { validState: typeof initialValidState } =
+    React.useContext(Validation);
   // row number state
   const [addRowNum, setAddRowNum] = React.useState(1);
   const [rowsNum, setRowNum] = React.useState(0);
   const uploadRef: React.RefObject<HTMLInputElement> = React.createRef();
+  // responsive query
+  const medium = useMediaQuery({ maxWidth: 479 });
 
   // effect to set row numbers
   React.useEffect(() => {
@@ -588,82 +653,85 @@ const TableInputControl: React.FunctionComponent<ITableControlProps> = (props:IT
 
       setRowNum(_num);
     }
-  },[]);
+  }, []);
 
   const handleRowNum = React.useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       setAddRowNum(event.currentTarget.valueAsNumber);
     },
-    [],
+    []
   );
 
-  const handleAddRowClick = (event:React.MouseEvent<any>) => {
+  const handleAddRowClick = (event: React.MouseEvent<any>) => {
     // prev default
     event.preventDefault();
     // rows array to add
-    let rowArr = []
+    let rowArr = [];
     // push new obj into array
     for (let index = 0; index < addRowNum; index++) {
-      rowArr.push(new Object);
-    };
+      rowArr.push(new Object());
+    }
     // apply transaction
     try {
       // add rows
       props.api.applyTransaction({
-        add: rowArr
+        add: rowArr,
       });
       // validate data rows after adding
       props.validateDataEntries();
       // update rowsNum
-      setRowNum(oldNum => oldNum + addRowNum);
+      setRowNum((oldNum) => oldNum + addRowNum);
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
   };
 
-  const removeRowClick = (event:React.MouseEvent<any>) => {
+  const removeRowClick = (event: React.MouseEvent<any>) => {
     // prev default
     event.preventDefault();
     // get selected nodes
     const selectedNodes = props.api.getSelectedNodes();
     // map data from nodes
-    const selectedData = selectedNodes.map( node => node.data );
+    const selectedData = selectedNodes.map((node) => node.data);
     // apply transaction
     try {
       // remove selected nodes from form, validation handled by event handler
       props.api.applyTransaction({
-        remove:selectedData
+        remove: selectedData,
       });
-      // set selected arrays to empty list 
+      // set selected arrays to empty list
       props.setRowSelected([]);
       // update rowsNum
-      setRowNum(oldNum => oldNum - selectedData.length);
+      setRowNum((oldNum) => oldNum - selectedData.length);
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
   };
 
   // experimental, upload excel
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     // get ref
-    let fileElem:HTMLInputElement = uploadRef.current;
+    let fileElem: HTMLInputElement = uploadRef.current;
     // get file
     let xlDoc = fileElem.files[0];
     console.log(xlDoc);
     // mini validation
-    let validTypes = [".xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"];
+    let validTypes = [
+      ".xlsx",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ];
     if (!validTypes.includes(xlDoc.type)) {
       // preferably notify user
       return;
-    };
+    }
     // make a reader
     let reader = new FileReader();
     // set function on load of reader
-    reader.onload = function(e) {
+    reader.onload = function (e) {
       var data = new Uint8Array(reader.result as ArrayBuffer);
       // xlsx read the data
-      var workbook = XLSX.read(data, {type: 'array'});
-  
+      var workbook = XLSX.read(data, { type: "array" });
+
       console.log(workbook);
       // populate the form
       populateGridWithWorkbook(workbook);
@@ -672,25 +740,24 @@ const TableInputControl: React.FunctionComponent<ITableControlProps> = (props:IT
     reader.readAsArrayBuffer(xlDoc);
   };
 
-  const populateGridWithWorkbook = (workbook:XLSX.WorkBook) => {
-
+  const populateGridWithWorkbook = (workbook: XLSX.WorkBook) => {
     // workbook name by sheet index
     let firstSheetName = workbook.SheetNames[0];
     // sheet by sheet name
     let worksheet = workbook.Sheets[firstSheetName];
     // columns
     let columns = {
-      "A": "Project",
-      "B": "Task",
-      "C": "Location",
-      "D": "Activity Desription",
-      "E": "monday",
-      "F": "tuesday",
-      "G": "wednesday",
-      "H": "thursday",
-      "I": "friday",
-      "J": "saturday",
-      "K": "sunday",
+      A: "Project",
+      B: "Task",
+      C: "Location",
+      D: "Activity Desription",
+      E: "monday",
+      F: "tuesday",
+      G: "wednesday",
+      H: "thursday",
+      I: "friday",
+      J: "saturday",
+      K: "sunday",
     };
 
     // row data
@@ -698,10 +765,10 @@ const TableInputControl: React.FunctionComponent<ITableControlProps> = (props:IT
     // start index at 2, first row headers
     let rowIndex = 2;
     // iterate over each row in sheet pulling out the columns we're expecting
-    while (worksheet['A' + rowIndex]) {
+    while (worksheet["A" + rowIndex]) {
       let row = {};
-      Object.keys(columns).forEach(function(column) {
-          row[columns[column]] = worksheet[column + rowIndex].w;
+      Object.keys(columns).forEach(function (column) {
+        row[columns[column]] = worksheet[column + rowIndex].w;
       });
       // push into row data
       rowData.push(row);
@@ -722,56 +789,101 @@ const TableInputControl: React.FunctionComponent<ITableControlProps> = (props:IT
     // get the actual input and click it
     uploadRef.current.click();
   };
+  // testing, handle reset form
+  const handleResetClick = () => {
+    // simply set row data to empty obj
+    props.api.setRowData([]);
+    // set number of rows to 0
+    setRowNum(0);
+  };
 
-  return(
+  return (
     <>
-      <Stack horizontal tokens={{ childrenGap: 7 }} wrap={true} horizontalAlign={"start"}>
+      <Stack
+        horizontal
+        tokens={{ childrenGap: 7 }}
+        wrap={true}
+        horizontalAlign={medium ? "space-evenly" : "center"}
+        verticalAlign={"center"}
+      >
         <input
           type="number"
           onChange={handleRowNum}
           value={addRowNum}
           max={20}
           min={0}
+          style={{ height: "auto" }}
         />
-        <PrimaryButton
+        <ResponsivePrimaryButton
+          iconProps={{ iconName: "AddTo" }}
+          title="Add Rows"
+          ariaLabel="Add Rows"
           text="Add Rows"
           onClick={handleAddRowClick}
-          disabled={(rowsNum >= 15)}
+          disabled={rowsNum >= 15}
         />
-        <PrimaryButton
+        <ResponsivePrimaryButton
+          iconProps={{ iconName: "SkypeCircleMinus" }}
+          title="Remove Selected Rows"
+          ariaLabel="Remove Selected Rows"
           text="Remove Selected Rows"
           onClick={removeRowClick}
-          disabled={(props.rowSelected.length === 0)}
+          disabled={props.rowSelected.length === 0}
           styles={stylesDanger}
         />
-        <Stack verticalAlign={"center"}>
-          <PrimaryButton text={"Upload Excel"} onClick={handleUploadClick}/>
-          <input type="file" name="testing" id="testxml" ref={uploadRef} 
-            onChange={handleFileUpload}
-            style={{"display": "none"}}
-            accept={".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}
-          />
-        </Stack>
+        <ResponsivePrimaryButton
+          title="Upload Excel"
+          ariaLabel="Upload Excel"
+          iconProps={{ iconName: "BulkUpload" }}
+          text={"Upload Excel"}
+          onClick={handleUploadClick}
+        />
+        <input
+          type="file"
+          name="testing"
+          id="testxml"
+          ref={uploadRef}
+          onChange={handleFileUpload}
+          style={{ display: "none" }}
+          accept={
+            ".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+          }
+        />
+        <ResponsivePrimaryButton
+          text={"Reset Form"}
+          onClick={handleResetClick}
+          disabled={validState.msg === "Add a row"}
+          styles={stylesDanger}
+          iconProps={{ iconName: "Delete" }}
+        />
       </Stack>
     </>
   );
 };
 
-const TableDateControl: React.FunctionComponent<ITableControlProps> = (props:ITableControlProps) => {
+const TableDateControl: React.FunctionComponent<ITableControlProps> = (
+  props: ITableControlProps
+) => {
   // date context
-  const {date, setDate}: {date: Date|null, setDate:React.Dispatch<React.SetStateAction<null|Date>> } = React.useContext(DateContext);
+  const {
+    date,
+    setDate,
+  }: {
+    date: Date | null;
+    setDate: React.Dispatch<React.SetStateAction<null | Date>>;
+  } = React.useContext(DateContext);
   // state
-  const [period, setPeriod] = React.useState({week: "", year: ""});
+  const [period, setPeriod] = React.useState({ week: "", year: "" });
   // props
   const _mainFormMode = props.formMode;
 
   // effect
   React.useEffect(() => {
     if (_mainFormMode === "new" || date === null) {
-      let _date = new Date;
+      let _date = new Date();
       // set new date
       setDate(_date);
-    }; 
+    }
   }, [_mainFormMode]);
 
   // effect for period
@@ -781,7 +893,7 @@ const TableDateControl: React.FunctionComponent<ITableControlProps> = (props:ITa
     // set period
     setPeriod({
       week: _week,
-      year: _year
+      year: _year,
     });
   }, [date]);
 
@@ -792,22 +904,25 @@ const TableDateControl: React.FunctionComponent<ITableControlProps> = (props:ITa
   };
 
   // format label to show week
-  const formatLabel = (date:Date | null): string => {
+  const formatLabel = (date: Date | null): string => {
     if (date === null) {
       return "Select date";
-    };
+    }
     // get week and year
     let [_week, _year] = getWeekAndYear(date);
-    return `Year: ${_year} Week: ${_week}`
+    return `Year: ${_year} Week: ${_week}`;
   };
 
   // date list hook
   /* let [_week, _year] = getWeekAndYear(date ? date : null); */
 
   return (
-    <Stack horizontal tokens={{ childrenGap: 7, padding: 2 }} horizontalAlign={"center"}>
-      {
-        _mainFormMode === "new" &&
+    <Stack
+      horizontal
+      tokens={{ childrenGap: 7, padding: 2 }}
+      horizontalAlign={"center"}
+    >
+      {_mainFormMode === "new" && (
         <>
           <DatePicker
             value={date}
@@ -825,48 +940,46 @@ const TableDateControl: React.FunctionComponent<ITableControlProps> = (props:ITa
             maxDate={new Date(2021, 12, 31)}
           />
         </>
-      }
-      {
-        _mainFormMode === "edit" &&
+      )}
+      {_mainFormMode === "edit" && (
         <>
-        {date &&
-          <Label>
-            Week {period.week} Year {period.year}
-          </Label>
-        }
+          {date && (
+            <Label>
+              Week {period.week} Year {period.year}
+            </Label>
+          )}
         </>
-      }
+      )}
     </Stack>
-  )
+  );
 };
 
-const TableSaveControl: React.FunctionComponent<ITableControlProps> = (props:ITableControlProps) => {
-
-  // date context
-  const {date:dateValue}: {date: Date} = React.useContext(DateContext);
-  const {validState}: {validState: typeof initialValidState} = React.useContext(Validation);
-  const {dispatchStore}:{dispatchStore:React.Dispatch<IAction>} = React.useContext(StoreData);
-  // state
-  const [controlMode, setControlMode] = React.useState<string>("new");
+const TableSaveControl: React.FunctionComponent<ITableControlProps> = (
+  props: ITableControlProps
+) => {
+  // date, validation and store context
+  const { date: dateValue }: { date: Date } = React.useContext(DateContext);
+  const { validState }: { validState: typeof initialValidState } =
+    React.useContext(Validation);
+  const { dispatchStore }: { dispatchStore: React.Dispatch<IAction> } =
+    React.useContext(StoreData);
+  // states
   const [isLoading, setIsLoading] = React.useState(false);
   const [notification, setNotification] = React.useState(false);
+  // props
+  const _mainFormMode = props.formMode;
   // variables
-  let labelMsg = `${controlMode === "new" ? "Creating" : "Updating"} Sheet`;
-  let buttonMsg = `${controlMode === "new" ? "Save" : "Update"} Sheet`;
-  let notificationMsg = `Sheet ${controlMode === "new" ? "Created" : "Updated"}`;
-
-  // effect 
-  React.useEffect(() => {
-    let _mainFormMode = props.formMode;
-    // set mode
-    setControlMode(_mainFormMode);
-  },[props.formMode]);
+  let labelMsg = `${_mainFormMode === "new" ? "Creating" : "Updating"} Sheet`;
+  let buttonMsg = `${_mainFormMode === "new" ? "Save" : "Update"} Sheet`;
+  let notificationMsg = `Sheet ${
+    _mainFormMode === "new" ? "Created" : "Updated"
+  }`;
 
   // handle save clicked
   const handleSaveClick = () => {
     /* if (year === null || week === null) return; */
     if (dateValue === null) return;
-    
+
     // butoon loading state
     setIsLoading(true);
 
@@ -874,7 +987,7 @@ const TableSaveControl: React.FunctionComponent<ITableControlProps> = (props:ITa
     /* let _week = Number(week.key);
     let _year = Number(year.text); */
     let [_week, _year] = getWeekAndYear(dateValue);
-    let _weekData: IUserWeekData[] = []
+    let _weekData: IUserWeekData[] = [];
 
     // use grid api
     props.api.forEachNode((rowNode, index) => {
@@ -883,7 +996,7 @@ const TableSaveControl: React.FunctionComponent<ITableControlProps> = (props:ITa
         id: getRandomInt(8),
         Project: "",
         Location: "",
-        Task:"",
+        Task: "",
         monday: 0,
         tuesday: 0,
         wednesday: 0,
@@ -891,7 +1004,7 @@ const TableSaveControl: React.FunctionComponent<ITableControlProps> = (props:ITa
         friday: 0,
         saturday: 0,
         sunday: 0,
-        ...rowNode.data
+        ...rowNode.data,
       });
     });
 
@@ -900,63 +1013,93 @@ const TableSaveControl: React.FunctionComponent<ITableControlProps> = (props:ITa
       week: Number(_week),
       year: Number(_year),
       data: _weekData,
-      status: "draft"
+      status: "draft",
     };
 
     // emulating a post request to a server  that returns successful instance
     let response = delay(3000, _postData);
 
-    response.then(result => {
+    response.then((result) => {
       console.log(result);
       dispatchStore({
         type: "updateWeek",
-        payload:{data: result}
-      })
+        payload: { data: result },
+      });
 
       // button state
       setIsLoading(false);
       setNotification(true);
     });
-
   };
+
+  // testing, handle reset form
+  /* const handleResetClick = () => {
+    // simply set row data to empty obj
+    props.api.setRowData([]);
+  }; */
 
   return (
     <StackItem align={"start"}>
-      {isLoading &&
-        <ProgressIndicator label={labelMsg}/>
-      }
-      {notification && 
+      {isLoading && <ProgressIndicator label={labelMsg} />}
+      {notification && (
         <NotificationBar
           barType={MessageBarType.success}
           show={notification}
           msg={notificationMsg}
         />
-      }
-      <Stack horizontal tokens={{childrenGap: 9, padding: 3}}>
+      )}
+      <Stack
+        horizontal
+        tokens={{ childrenGap: 9, padding: 3 }}
+        verticalAlign={"center"}
+      >
         <StackItem>
-          <PrimaryButton text={buttonMsg} onClick={handleSaveClick} disabled={!validState.formState || isLoading}/>
+          <ResponsivePrimaryButton
+            text={buttonMsg}
+            onClick={handleSaveClick}
+            disabled={!validState.formState || isLoading}
+            iconProps={{ iconName: "Save" }}
+          />
         </StackItem>
-        {
-          !validState.formState &&
+        {!validState.formState && (
           <StackItem>
-            <Label>
+            <Text
+              style={{
+                border: "1px solid #edbbbb",
+                borderLeft: "none",
+                borderRadius: "4px",
+                padding: "3px",
+              }}
+              variant={"mediumPlus"}
+            >
               {validState.msg}
-            </Label>
+            </Text>
           </StackItem>
-        }
+        )}
+        {/* <StackItem>
+          <ResponsivePrimaryButton 
+            text={"Reset Form"} 
+            onClick={handleResetClick} 
+            disabled={validState.msg === "Add a row"} 
+            styles={stylesDanger}
+            iconProps={{iconName:"Delete"}}
+          />
+        </StackItem> */}
       </Stack>
     </StackItem>
   );
 };
 
-const TableDraftControl: React.FunctionComponent<ITableDraftControlProps> = (props:ITableDraftControlProps) => {
-
+const TableDraftControl: React.FunctionComponent<ITableDraftControlProps> = (
+  props: ITableDraftControlProps
+) => {
   // if draft avilable return button, else null
   // props to use
-  let draftObj = {...props.hasDraft};
+  let draftObj = { ...props.hasDraft };
   let formMode = props.formMode;
   // context to use
-  const {setDate}: {setDate: React.Dispatch<React.SetStateAction<Date>>} = React.useContext(DateContext);
+  const { setDate }: { setDate: React.Dispatch<React.SetStateAction<Date>> } =
+    React.useContext(DateContext);
 
   const handleButtonClick = () => {
     // set date
@@ -964,31 +1107,36 @@ const TableDraftControl: React.FunctionComponent<ITableDraftControlProps> = (pro
     let _date = weekToDate(_draft.year, _draft.week);
     setDate(_date);
     // set table as edit
-    props.setFormMode("edit")
+    props.setFormMode("edit");
     // set the row data
     props.api.setRowData(_draft.data);
+    // run validation
+    props.validateDataEntries();
   };
 
-  return(
-    <Stack horizontal tokens={{ childrenGap: 7, padding: 2 }} horizontalAlign={"center"}>
-    {
-      draftObj.state && formMode === "new" ? 
-      <StackItem>
-        <PrimaryButton
-          text={"Draft Available"}
-          onClick={handleButtonClick}
-        />
-      </StackItem> :
-      null
-    }
+  return (
+    <Stack
+      horizontal
+      tokens={{ childrenGap: 7, padding: 2 }}
+      horizontalAlign={"center"}
+    >
+      {draftObj.state && formMode === "new" ? (
+        <StackItem>
+          <PrimaryButton text={"Draft Available"} onClick={handleButtonClick} />
+        </StackItem>
+      ) : null}
     </Stack>
-  )
+  );
 };
 
-const TableBackControl: React.FunctionComponent<ITableControlProps> = (props:ITableControlProps) => {
-
-  // context 
-  const {setDate}: {setDate:React.Dispatch<React.SetStateAction<null|Date>> } = React.useContext(DateContext);
+const TableBackControl: React.FunctionComponent<ITableControlProps> = (
+  props: ITableControlProps
+) => {
+  // context
+  const {
+    setDate,
+  }: { setDate: React.Dispatch<React.SetStateAction<null | Date>> } =
+    React.useContext(DateContext);
   // return button only if edit mode and a prop to set draft page is set
   let formMode = props.formMode;
   let setDraftPageState = props.setDraftPageState;
@@ -1002,18 +1150,16 @@ const TableBackControl: React.FunctionComponent<ITableControlProps> = (props:ITa
 
   return (
     <>
-    {
-      formMode === "edit" && setDraftPageState ?
-      <StackItem>
-        <PrimaryButton
-          text={"Back"}
-          iconProps={{iconName:"ChromeBack"}}
-          onClick={handleBackClicked}
-          styles={stylesDanger}
-        />
-      </StackItem> :
-      null
-    }
+      {formMode === "edit" && setDraftPageState ? (
+        <StackItem>
+          <PrimaryButton
+            text={"Back"}
+            iconProps={{ iconName: "ChromeBack" }}
+            onClick={handleBackClicked}
+            styles={stylesDanger}
+          />
+        </StackItem>
+      ) : null}
     </>
   );
 };

@@ -5,12 +5,11 @@ import { ThemeProvider } from '@uifabric/foundation';
 import { createTheme } from '@uifabric/styling';
 /* import { escape } from '@microsoft/sp-lodash-subset'; */
 // custom components
-import {NavBar} from "./nav/Navbar";
-import NewProjectPage from "./form/NewProjectPage"
+import { NavBar } from "./nav/Navbar";
 import DraftPage from './draft/DraftPage';
 import TablePage from "./form/TablePage";
 // sample data and types
-import { IUserYear, IUserWeek, testData, IUserWeekData} from "./sampleData";
+import { IUserYear, IUserWeek, testData, IUserWeekData } from "./sampleData";
 import { WebPartContext } from "@microsoft/sp-webpart-base";
 
 export interface IMainProps {
@@ -19,30 +18,30 @@ export interface IMainProps {
 }
 // state type
 export type IState = {
-  data: {}|IUserYear;
+  data: {} | IUserYear;
   status: string;
-} 
+}
 // action types
 export type IAction =
- | { type: "updateAll", payload:IState }
- | { type: "updateLoading", payload: {status: string} }
- | { type: "updateWeek", payload: {data: IUserWeek} }
+  | { type: "updateAll", payload: IState }
+  | { type: "updateLoading", payload: { status: string } }
+  | { type: "updateWeek", payload: { data: IUserWeek } }
 
 // reducer, leaving this here for readability, should move when bigger
-const myReducer = (state:IState, action:IAction): IState => {
+const myReducer = (state: IState, action: IAction): IState => {
   switch (action.type) {
     case "updateAll":
       return {
         ...state,
         ...action.payload
       }
-    
+
     case "updateLoading":
       return {
         ...state,
         status: action.payload.status
       }
-      
+
     case "updateWeek":
       console.log(action);
       let _weekToUpdate = String(action.payload.data.week);
@@ -52,10 +51,10 @@ const myReducer = (state:IState, action:IAction): IState => {
         ...state,
         data: {
           ...state.data,
-          [_yearToUpdate]:{...state.data[_yearToUpdate], [_weekToUpdate]: action.payload.data}
+          [_yearToUpdate]: { ...state.data[_yearToUpdate], [_weekToUpdate]: action.payload.data }
         }
       }
-  
+
     default:
       break;
   }
@@ -67,16 +66,16 @@ export const DateContext = React.createContext(null);
 export const TableDataContext = React.createContext(null);
 
 // main page for webpart, handles states for nav and others
-const MainPage: React.FunctionComponent<IMainProps> = (props:IMainProps) => {
+const MainPage: React.FunctionComponent<IMainProps> = (props: IMainProps) => {
 
   // page state
   const [pageState, setPageState] = React.useState("drafts");
   // date selected
   const [date, setDate] = React.useState<Date | null>(null);
   // main data and dispatch store
-  const [data, dispatchStore] = React.useReducer(myReducer, {data: {}, status: "idle"});
+  const [data, dispatchStore] = React.useReducer(myReducer, { data: {}, status: "idle" });
   // table form data
-  const [tableData, setTableData] = React.useState<IUserWeekData[]|[]>([]);
+  const [tableData, setTableData] = React.useState<IUserWeekData[] | []>([]);
 
   // useeffect for width
   React.useEffect(() => {
@@ -85,20 +84,20 @@ const MainPage: React.FunctionComponent<IMainProps> = (props:IMainProps) => {
     } catch (error) {
 
     }
-  },[]);
+  }, []);
 
   // useeffect to fetch working data, will be async in prod, simulate "loading"
   React.useEffect(() => {
     // dispatch loading status
     dispatchStore({
       type: "updateLoading",
-      payload:{status: "loading"}
+      payload: { status: "loading" }
     })
     // 5sec delay for actual data
     setTimeout(() => {
       dispatchStore({
         type: "updateAll",
-        payload:{
+        payload: {
           data: testData,
           status: "loaded"
         }
@@ -139,36 +138,36 @@ const MainPage: React.FunctionComponent<IMainProps> = (props:IMainProps) => {
     },
   });
 
-  console.log( "main theme", myTheme);
+  console.log("main theme", myTheme);
   /* <NewProjectPage
               dateObj={date}
               setDateApi={setDate}
               /> */
 
-  return(
+  return (
     <ThemeProvider theme={myTheme}>
-    <Stack tokens={{ childrenGap: 8, padding: 2 }}>
-      <StoreData.Provider value={{data, dispatchStore}}>
-      <DateContext.Provider value={{date, setDate}}>
-        <Stack horizontal>
-          <NavBar pageState={pageState} setPageState={setPageState}/>
-        </Stack>
-        <TableDataContext.Provider value={{tableData, setTableData}}>
-          <Stack>
-            {pageState === "new" &&
-              <TablePage
-                mode={"new"}
-              />
-            }
-            {pageState === "drafts" &&
-              <DraftPage
-              />
-            }
-          </Stack>
-        </TableDataContext.Provider>
-      </DateContext.Provider>
-      </StoreData.Provider>
-    </Stack>
+      <Stack tokens={{ childrenGap: 8, padding: 2 }}>
+        <StoreData.Provider value={{ data, dispatchStore }}>
+          <DateContext.Provider value={{ date, setDate }}>
+            <Stack horizontal>
+              <NavBar pageState={pageState} setPageState={setPageState} />
+            </Stack>
+            <TableDataContext.Provider value={{ tableData, setTableData }}>
+              <Stack>
+                {pageState === "new" &&
+                  <TablePage
+                    mode={"new"}
+                  />
+                }
+                {pageState === "drafts" &&
+                  <DraftPage
+                  />
+                }
+              </Stack>
+            </TableDataContext.Provider>
+          </DateContext.Provider>
+        </StoreData.Provider>
+      </Stack>
     </ThemeProvider>
   );
 };

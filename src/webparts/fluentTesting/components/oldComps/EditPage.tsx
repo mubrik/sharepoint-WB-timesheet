@@ -7,7 +7,7 @@ import { PrimaryButton, Stack, StackItem,
   MessageBarType,
 } from 'office-ui-fabric-react';
 import NotificationBar from '../utils/NotificationBar';
-import TableForm from '../form/TableForm';
+import TableForm from './TableForm';
 import {stylesDanger} from "../utils/utils";
 // gridtable
 import { GridApi} from "@ag-grid-community/all-modules";
