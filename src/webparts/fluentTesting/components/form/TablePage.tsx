@@ -295,7 +295,7 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps) => {
     _gridApi.forEachNode((rowNode, index) => {
       // get row data
       let rowdata = { ...rowNode.data };
-
+      // loop over every column, if a weekday column, calculate time in secs and add it
       Object.keys(rowdata).forEach((colName) => {
         if (weekDays.includes(colName)) {
           let timeInSec = valueToSeconds(rowdata[colName]);
@@ -333,6 +333,7 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps) => {
     }
 
     _gridApi.forEachNode((rowNode, index) => {
+      // if validation already hit an invalid entry, return
       if (!isValid) return;
       // get row data
       let rowdata = { ...rowNode.data };
@@ -352,9 +353,11 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps) => {
             },
           };
         });
+        // set is valid to false so iteration halts
         isValid = false;
         return isValid;
-      } else {
+        // set as valid only after last row checked, avoid changing states frequently
+      } else if (valid && rowId === rowsNumber-1) {
         setValidState((oldState) => {
           return {
             ...oldState,
@@ -404,12 +407,6 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps) => {
           validateDataEntries={validateDataEntries}
           calculateTotalTime={calculateTotalTime}
         />
-        {/* <StackItem>
-          <TableSaveControl
-            formMode={formMode}
-            api={gridApi}
-          />
-        </StackItem> */}
       </Stack>
     </Validation.Provider>
   );
@@ -1073,15 +1070,6 @@ const TableSaveControl: React.FunctionComponent<ITableControlProps> = (
             </Text>
           </StackItem>
         )}
-        {/* <StackItem>
-          <ResponsivePrimaryButton 
-            text={"Reset Form"} 
-            onClick={handleResetClick} 
-            disabled={validState.msg === "Add a row"} 
-            styles={stylesDanger}
-            iconProps={{iconName:"Delete"}}
-          />
-        </StackItem> */}
       </Stack>
     </StackItem>
   );

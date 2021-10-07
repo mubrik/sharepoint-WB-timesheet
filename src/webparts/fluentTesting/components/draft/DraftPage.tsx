@@ -5,13 +5,14 @@ import { StoreData, IState, DateContext, TableDataContext } from "../FluentTesti
 import {
   Icon, FocusZone,
   FocusZoneDirection, TextField,
-  List, IColumn, DetailsList,
+  List, IColumn,
   ITheme, mergeStyleSets,
   getTheme, getFocusStyle,
   StackItem, Stack,
   Dropdown, IDropdownOption,
-  Spinner, SelectionMode, DetailsRow,
-  GroupedList, IGroup, DetailsListLayoutMode
+  Spinner,
+  GroupedList, IGroup, 
+  IPageProps
 } from 'office-ui-fabric-react';
 // components
 import EditPage from '../oldComps/EditPage';
@@ -19,55 +20,31 @@ import TablePage from '../form/TablePage';
 import DraftDialog from "./DraftDialog";
 // sample data types
 import { IUserWeek, IUserWeeks, IUserYear, draftGroupList, IUserWeekData } from '../sampleData';
-// utils
-import { weekToDate } from "../utils/utils";
 // theming
 const theme: ITheme = getTheme();
 const { palette, semanticColors, fonts } = theme;
 // styles
-const classNames = mergeStyleSets({
-  itemCell: [
-    getFocusStyle(theme, { inset: -1 }),
-    {
-      minHeight: 54,
-      padding: 10,
-      boxSizing: 'border-box',
-      cursor: 'pointer',
-      borderBottom: `1px solid ${semanticColors.bodyDivider}`,
-      display: 'flex',
-      selectors: {
-        '&:hover': { background: palette.neutralLight },
-      },
-    },
-  ],
-  itemImage: {
-    flexShrink: 0,
+const gridCLasses = mergeStyleSets({
+
+  mainGrid: {
+    display: "flex",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    width: "auto",
+    overflow: "hidden",
   },
-  itemContent: {
-    marginLeft: 10,
-    overflow: 'hidden',
-    flexGrow: 1,
+  itemContainer: {
+    display: "flex",
+    alignItems: "center",
+    borderRadius: "4px",
+    margin: "4px",
+    cursor: "pointer",
+    boxShadow: "0px 0px 4px 0px #433f7e7d",
+    overflow: "hidden",
   },
-  itemName: [
-    fonts.xLarge,
-    {
-      whiteSpace: 'nowrap',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-    },
-  ],
-  itemIndex: {
-    fontSize: fonts.small.fontSize,
-    color: palette.neutralTertiary,
-    marginBottom: 10,
-  },
-  chevron: {
-    alignSelf: 'center',
-    marginLeft: 10,
-    color: palette.neutralTertiary,
-    fontSize: fonts.large.fontSize,
-    flexShrink: 0,
-  },
+  itemLabel: {
+    padding: "5px"
+  }
 });
 
 export interface IDraftProps {
@@ -120,61 +97,6 @@ const DraftPage: React.FunctionComponent<IDraftProps> = (props: IDraftProps) => 
     { key: "full", text: "All" },
   ];
 
-  // column for list
-  const columns: IColumn[] = [
-    {
-      key: 'column1',
-      name: 'Year',
-      fieldName: 'Year',
-      minWidth: 210,
-      maxWidth: 350,
-      isRowHeader: true,
-      isResizable: true,
-      data: 'string',
-      onRender: (item: IUserWeek) => {
-        return <span>{item.year}</span>;
-      },
-      isPadded: true,
-    },
-    {
-      key: 'column2',
-      name: 'Week',
-      fieldName: 'Week',
-      minWidth: 210,
-      maxWidth: 350,
-      isRowHeader: true,
-      isResizable: true,
-      data: 'string',
-      onRender: (item: IUserWeek) => {
-        return <span>{item.week}</span>;
-      },
-      isPadded: true,
-    },
-    {
-      key: 'column3',
-      name: 'Status',
-      fieldName: 'Status',
-      minWidth: 70,
-      maxWidth: 90,
-      isResizable: true,
-      data: 'string',
-      onRender: (item: IUserWeek) => {
-        return <span>{item.status}</span>;
-      },
-      isPadded: true,
-    }
-  ];
-
-  // render row in group
-  const onRenderGroupRow = React.useCallback(
-    (nestingDepth?: number, item?: IUserWeek, itemIndex?: number, group?: IGroup): React.ReactNode => {
-      /* console.log(group, item) */
-      return (
-        <div />
-      )
-    },
-    [columns],
-  );
 
   // set data
   React.useEffect(() => {
@@ -272,20 +194,42 @@ const DraftPage: React.FunctionComponent<IDraftProps> = (props: IDraftProps) => 
 
   };
 
-  // function to render a single list item
-  const onRenderCell = (item: IUserWeek, index: number | undefined): JSX.Element => {
+  const onRenderPage = React.useCallback((props:IPageProps) => {
+    // get list item
+    let _itemsList: IUserWeek[] = props.page.items;
+    console.log(props);
 
     return (
-      <div className={classNames.itemCell} data-is-focusable={true} onClick={() => handleListItemClick(item)}>
-        <div className={classNames.itemContent}>
-          <div className={classNames.itemName}>{`Week: ${item.week}`}</div>
-          <div className={classNames.itemIndex}>{`Year: ${item.year}`}</div>
-          <div>{`Status: ${item.status}`}</div>
+      <div
+        className={gridCLasses.mainGrid}
+        key={props.key}
+        role={props.role}
+      >
+        {_itemsList.map((weekData) => (
+          <div
+            className={gridCLasses.itemContainer}
+            data-is-focusable
+            key={weekData.status + weekData.week + weekData.year}
+            onClick={() => handleListItemClick(weekData)}
+          >
+          <span className={gridCLasses.itemLabel}>Week: <strong>{weekData.week}</strong></span>
+          <span className={gridCLasses.itemLabel}>Year: <strong>{weekData.year}</strong></span>
+          <span className={gridCLasses.itemLabel}>Status: <strong>{weekData.status}</strong></span>
         </div>
-        <Icon className={classNames.chevron} iconName={'ChevronRight'} />
+        ))}
       </div>
     );
-  };
+
+  }, [])
+
+  /* const onRenderSurface = (props) => {
+    console.log(props);
+    return (
+      <div>
+        onRenderPage()
+      </div>
+    )
+  } */
 
   return (
     <Stack tokens={{ childrenGap: 7, padding: 2 }}>
@@ -331,29 +275,13 @@ const DraftPage: React.FunctionComponent<IDraftProps> = (props: IDraftProps) => 
           <Stack>
             {shownItems &&
               <FocusZone direction={FocusZoneDirection.vertical}>
-                <List items={shownItems} onRenderCell={onRenderCell} />
-                {/* <GroupedList
-              items={shownItems}
-              onRenderCell={onRenderGroupRow}
-              groups={draftGroupList}
-            /> */}
-                {/* <DetailsList
-              items={shownItems}
-              columns={columns}
-              isHeaderVisible={true}
-              selectionMode={SelectionMode.none}
-              layoutMode={DetailsListLayoutMode.justified}
-              onRenderRow={(props) => {
-                console.log(props);
-                return (
-                <div onClick={() => handleListItemClick(props.item)}>
-                  <DetailsRow {...props}/>
-                </div>)
-              }}
-            /> */}
+                <List items={shownItems} 
+                onRenderPage={onRenderPage} 
+                /* onRenderSurface={onRenderSurface} */
+                getItemCountForPage={() => 53}
+                />
               </FocusZone>
             }
-
             {
               !shownItems &&
               <>
