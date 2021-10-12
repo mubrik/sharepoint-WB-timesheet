@@ -20,12 +20,12 @@ export interface IMainProps {
 export type IState = {
   data: {} | IUserYear;
   status: string;
-}
+};
 // action types
 export type IAction =
   | { type: "updateAll", payload: IState }
   | { type: "updateLoading", payload: { status: string } }
-  | { type: "updateWeek", payload: { data: IUserWeek } }
+  | { type: "updateWeek", payload: { data: IUserWeek } };
 
 // reducer, leaving this here for readability, should move when bigger
 const myReducer = (state: IState, action: IAction): IState => {
@@ -34,13 +34,13 @@ const myReducer = (state: IState, action: IAction): IState => {
       return {
         ...state,
         ...action.payload
-      }
+      };
 
     case "updateLoading":
       return {
         ...state,
         status: action.payload.status
-      }
+      };
 
     case "updateWeek":
       console.log(action);
@@ -53,8 +53,7 @@ const myReducer = (state: IState, action: IAction): IState => {
           ...state.data,
           [_yearToUpdate]: { ...state.data[_yearToUpdate], [_weekToUpdate]: action.payload.data }
         }
-      }
-
+      };
     default:
       break;
   }
@@ -62,7 +61,7 @@ const myReducer = (state: IState, action: IAction): IState => {
 // context to pass down date and store data
 export const StoreData = React.createContext(null);
 export const DateContext = React.createContext(null);
-// testing 
+// testing
 export const TableDataContext = React.createContext(null);
 
 // main page for webpart, handles states for nav and others
@@ -92,7 +91,7 @@ const MainPage: React.FunctionComponent<IMainProps> = (props: IMainProps) => {
     dispatchStore({
       type: "updateLoading",
       payload: { status: "loading" }
-    })
+    });
     // 5sec delay for actual data
     setTimeout(() => {
       dispatchStore({
@@ -101,7 +100,7 @@ const MainPage: React.FunctionComponent<IMainProps> = (props: IMainProps) => {
           data: testData,
           status: "loaded"
         }
-      })
+      });
     }, 5000);
 
   }, []);
@@ -137,12 +136,6 @@ const MainPage: React.FunctionComponent<IMainProps> = (props: IMainProps) => {
       bodyText: "#000000",
     },
   });
-
-  console.log("main theme", myTheme);
-  /* <NewProjectPage
-              dateObj={date}
-              setDateApi={setDate}
-              /> */
 
   return (
     <ThemeProvider theme={myTheme}>

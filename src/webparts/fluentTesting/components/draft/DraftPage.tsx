@@ -1,28 +1,23 @@
 import * as React from 'react';
 // react context
-import { StoreData, IState, DateContext, TableDataContext } from "../FluentTesting";
+import { StoreData, IState } from "../FluentTesting";
 // UI
 import {
-  Icon, FocusZone,
+  FocusZone,
   FocusZoneDirection, TextField,
-  List, IColumn,
-  ITheme, mergeStyleSets,
-  getTheme, getFocusStyle,
+  List, mergeStyleSets,
   StackItem, Stack,
   Dropdown, IDropdownOption,
   Spinner,
-  GroupedList, IGroup, 
   IPageProps
 } from 'office-ui-fabric-react';
 // components
-import EditPage from '../oldComps/EditPage';
 import TablePage from '../form/TablePage';
 import DraftDialog from "./DraftDialog";
 // sample data types
-import { IUserWeek, IUserWeeks, IUserYear, draftGroupList, IUserWeekData } from '../sampleData';
-// theming
-const theme: ITheme = getTheme();
-const { palette, semanticColors, fonts } = theme;
+import { IUserWeek, IUserWeeks, IUserYear } from '../sampleData';
+import {compareWeekPeriod} from "../utils/utils";
+
 // styles
 const gridCLasses = mergeStyleSets({
 
@@ -47,6 +42,7 @@ const gridCLasses = mergeStyleSets({
   }
 });
 
+// types
 export interface IDraftProps {
   userData?: IUserYear;
 }
@@ -57,30 +53,30 @@ interface IInitialState {
   full: IUserWeek[];
   status: string;
 }
-
+// initial draft list state
 const initialState: IInitialState = {
   2020: [],
   2021: [],
   full: [],
   status: "idle"
-}
+};
 
-const DraftPage: React.FunctionComponent<IDraftProps> = (props: IDraftProps) => {
+const DraftPage: React.FunctionComponent<IDraftProps> = () => {
 
   // react context
   const { data: storeData }: { data: IState } = React.useContext(StoreData);
-  const { date, setDate }: { date: Date | null, setDate: React.Dispatch<React.SetStateAction<null | Date>> } = React.useContext(DateContext);
-  const { setTableData }: { setTableData: React.Dispatch<React.SetStateAction<IUserWeekData[] | []>> } = React.useContext(TableDataContext);
-
-  // controlled states
-  const [year, setYear] = React.useState<null | IDropdownOption>(null);
-  const [statusFilter, setStatusFilter] = React.useState<null | IDropdownOption>(null);
+  // controlled input states
+  const [yearFilter, setYearFilter] = React.useState<IDropdownOption>({ key: "full", text: "All" },);
+  const [statusFilter, setStatusFilter] = React.useState<IDropdownOption>({ key: "full", text: "All" });
+  const [sort, setSort] = React.useState<IDropdownOption>({ key: "up", text: "Ascending" });
+  const [weekFilter, setweekFilter] = React.useState("");
+  // page view state
   const [pageState, setPageState] = React.useState<string>("list");
-  const [editItem, setEditItem] = React.useState<IUserWeek | null>(null);
   // list data, data list should be async set in production
   const [draftData, setDraftData] = React.useState<IInitialState>(initialState);
-  const [draftDialog, setDraftDialog] = React.useState({ hidden: true, data: null });
   const [shownItems, setShownItems] = React.useState<null | IUserWeek[]>(null);
+  // modal dialog state and data
+  const [draftDialog, setDraftDialog] = React.useState({ hidden: true, data: null });
 
   // year keys
   const controlledYear = [
@@ -97,82 +93,85 @@ const DraftPage: React.FunctionComponent<IDraftProps> = (props: IDraftProps) => 
     { key: "full", text: "All" },
   ];
 
+  // sorting
+  const controlledSort = [
+    { key: "up", text: "Ascending" },
+    { key: "down", text: "Decending" },
+  ];
 
   // set data
   React.useEffect(() => {
-    if (year === null) {
-      if (storeData.status === "loaded") {
-        // get data from different year and make a list
-        let weeksIn2020: IUserWeek[] = [];
-        let weeksIn2021: IUserWeek[] = [];
-        // objects with data
-        let _data20: IUserWeeks = storeData.data["2020"];
-        let _data21: IUserWeeks = storeData.data["2021"];
-        // loop 2020 keys
-        Object.keys(_data20).forEach((key) => {
-          weeksIn2020.push(_data20[key]);
-        });
-        // loop 2021 keys
-        Object.keys(_data21).forEach((key) => {
-          weeksIn2021.push(_data21[key]);
-        });
-        // concat
-        let fullWeeksArray: IUserWeek[] = weeksIn2020.concat(weeksIn2021);
-
-        // set data
-        setDraftData((oldData) => {
-          return {
-            ...oldData,
-            2020: weeksIn2020,
-            2021: weeksIn2021,
-            full: fullWeeksArray,
-            status: "loaded"
-          }
-        });
-
-        /* // set list 
-        setDataList(fullWeeksArray); */
-        // set shown list
-        setShownItems(fullWeeksArray);
-
-      }
+    if (storeData.status === "loaded") {
+      // get data from different year and make a list
+      let weeksIn2020: IUserWeek[] = [];
+      let weeksIn2021: IUserWeek[] = [];
+      // objects with data
+      let _data20: IUserWeeks = storeData.data["2020"];
+      let _data21: IUserWeeks = storeData.data["2021"];
+      // loop 2020 keys
+      Object.keys(_data20).forEach((key) => {
+        weeksIn2020.push(_data20[key]);
+      });
+      // loop 2021 keys
+      Object.keys(_data21).forEach((key) => {
+        weeksIn2021.push(_data21[key]);
+      });
+      // concat
+      let fullWeeksArray: IUserWeek[] = weeksIn2020.concat(weeksIn2021);
+      // set data
+      setDraftData((oldData) => {
+        return {
+          ...oldData,
+          2020: weeksIn2020,
+          2021: weeksIn2021,
+          full: fullWeeksArray,
+          status: "loaded"
+        };
+      });
+      // set shown list
+      setShownItems(fullWeeksArray);
 
     }
   }, [storeData]);
 
-  // handle item selected
-  const handleYearChanged = (event: React.FormEvent<HTMLDivElement>, item: IDropdownOption) => {
+  // use effect for handling filter states change
+  React.useEffect(() => {
+    const _year = yearFilter.key;
+    const _status = statusFilter.key;
+    const _sort = sort.key;
 
-    // set year
-    setYear(item);
-    // set items
-    let arrayToSet: Array<IUserWeek> = draftData[item.key];
+    // array year filtered
+    let arrayToSet: Array<IUserWeek> = [...draftData[_year]];
 
+    // check if data empty
     if (arrayToSet.length === 0) {
       setShownItems(null);
     } else {
-      setShownItems(arrayToSet);
-    };
-  };
+      // filter by weeek
+      let _filteredWeek = (weekFilter && weekFilter !== "0") ?
+        arrayToSet.filter(weekItem => {
+          return weekItem.week.toString().toLowerCase().indexOf(weekFilter.toLowerCase()) >= 0;
+        }) :
+        arrayToSet;
 
-  const handleStatusChanged = (event: React.FormEvent<HTMLDivElement>, item: IDropdownOption) => {
-    // set status
-    setStatusFilter(item);
-    // status string
-    let _status = item.key;
-    // working data
-    let _arrayToFilter: IUserWeek[] = year ? draftData[year.key] : draftData["full"];
-    if (_status === "full") {
-      setShownItems(draftData["full"]);
-      return;
+      // sort array
+      let _sortedWeek = (_sort === "up") ? _filteredWeek.sort(compareWeekPeriod) :
+        _filteredWeek.sort(compareWeekPeriod).reverse();
+
+      // filter by status
+      if (_status === "full") {
+        // sh
+        setShownItems(_sortedWeek);
+      } else {
+        // filtered status arr
+        let _filteredArr = _sortedWeek.filter(weekData => weekData.status === _status);
+        setShownItems(_filteredArr);
+      }
     }
-    // filter by week
-    setShownItems(_arrayToFilter.filter(weekItem => {
-      return weekItem.status === _status;
-    }));
-  };
 
-  // on item click
+  },[yearFilter, statusFilter, weekFilter, draftData, sort]);
+
+  // on item click, dialog handler
   const handleListItemClick = (weekData: IUserWeek) => {
     // set draft dialog
     setDraftDialog({
@@ -180,20 +179,7 @@ const DraftPage: React.FunctionComponent<IDraftProps> = (props: IDraftProps) => 
       data: weekData
     });
   };
-
-  // filter
-  const handleFilterChanged = (_: any, text: string): void => {
-
-    // working data
-    let _arrayToFilter: IUserWeek[] = year ? draftData[year.key] : draftData["full"];
-
-    // filter by week
-    setShownItems(_arrayToFilter.filter(weekItem => {
-      return weekItem.week.toString().toLowerCase().indexOf(text.toLowerCase()) >= 0;
-    }));
-
-  };
-
+  // how to render a page list
   const onRenderPage = React.useCallback((props:IPageProps) => {
     // get list item
     let _itemsList: IUserWeek[] = props.page.items;
@@ -220,7 +206,7 @@ const DraftPage: React.FunctionComponent<IDraftProps> = (props: IDraftProps) => 
       </div>
     );
 
-  }, [])
+  }, []);
 
   /* const onRenderSurface = (props) => {
     console.log(props);
@@ -248,35 +234,43 @@ const DraftPage: React.FunctionComponent<IDraftProps> = (props: IDraftProps) => 
           <Stack horizontal tokens={{ childrenGap: 10, padding: 8 }}>
             <StackItem>
               <Dropdown
-                selectedKey={year ? year.key : "full"}
-                label="Select a Year"
+                selectedKey={yearFilter ? yearFilter.key : "full"}
+                label="Filter Year"
                 options={controlledYear}
-                onChange={handleYearChanged}
+                onChange={(_,item) => setYearFilter(item)}
               />
             </StackItem>
             <StackItem>
+            <Dropdown
+              selectedKey={statusFilter ? statusFilter.key : "full"}
+              label={"Filter Status"}
+              options={controlledStatus}
+              onChange={(_,item) => setStatusFilter(item)}
+            />
+          </StackItem>
+            <StackItem>
+            <Dropdown
+              selectedKey={sort ? sort.key : "up"}
+              label={"Sort"}
+              options={controlledSort}
+              onChange={(_,item) => setSort(item)}
+            />
+          </StackItem>
+            <StackItem>
               <TextField
                 label={'Filter by Week'}
-                onChange={handleFilterChanged}
+                onChange={(_, text) => setweekFilter(text)}
                 type={"number"}
                 min={0}
                 max={53}
               />
             </StackItem>
-            {/* <StackItem>
-            <Dropdown
-              selectedKey={statusFilter ? statusFilter.key : "full"}
-              label={"Filter Status"}
-              options={controlledStatus}
-              onChange={handleStatusChanged}
-            />
-          </StackItem> */}
           </Stack>
           <Stack>
             {shownItems &&
               <FocusZone direction={FocusZoneDirection.vertical}>
-                <List items={shownItems} 
-                onRenderPage={onRenderPage} 
+                <List items={shownItems}
+                onRenderPage={onRenderPage}
                 /* onRenderSurface={onRenderSurface} */
                 getItemCountForPage={() => 53}
                 />
@@ -291,7 +285,6 @@ const DraftPage: React.FunctionComponent<IDraftProps> = (props: IDraftProps) => 
           </Stack>
         </>
       }
-
       {
         pageState === "edit" &&
         <>

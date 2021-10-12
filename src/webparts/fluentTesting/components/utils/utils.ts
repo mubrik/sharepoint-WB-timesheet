@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { getWeek, getYear } from 'date-fns';
 import { IUserWeek } from '../sampleData';
-import { IComponentStyles } from '@uifabric/foundation';
 
 export const stylesDanger = {
   root: [
@@ -29,64 +28,48 @@ export const stylesDanger = {
   ]
 };
 
-const styles = (props) => ({
-  root: [
-    {
-      background: props.theme.palette.themePrimary,
-      selectors: {
-        ':hover': {
-          background: props.theme.palette.themeSecondary,
-        }
-      }
-    },
-    props.isExpanded
-      ? { display: 'block' }
-      : { display: 'none' }
-  ]
-});
-
 // mini id geerator
 function getRandomInt(max: number): number {
   return Math.floor(Math.random() * max);
-};
+}
 // delay function, returns promise
 function delay(t: number, v: IUserWeek): Promise<IUserWeek> {
-  return new Promise(function (resolve) {
+  return new Promise((resolve) => {
     setTimeout(resolve.bind(null, v), t);
   });
-};
+}
 
 /**
 * get date by week number
-* @param  {Number} year 
-* @param  {Number} week 
-* @param  {Number} firstDayofWeek of week (optional; default = 1 (Monday)) 
-* @return {Date}      
+* @param  {Number} year
+* @param  {Number} week
+* @param  {Number} firstDayofWeek of week (optional; default = 1 (Monday))
+* @return {Date}
 */
 function weekToDate(year: number, week: number, firstDayofWeek: number = 1): Date {
   // get the first day of the year by multiplying 7 by week -1
   let date = new Date(year, 0, (1 + (week - 1) * 7)); // Elle's method
   date.setDate(date.getDate() + (firstDayofWeek - date.getDay())); // 0 - Sunday, 1 - Monday etc
   return date;
-};
+}
 
 /**
 * get time in seconds from number
 * @param  {number} value - value to get time details from
-*     
+*
 */
 const valueToSeconds = (value: number): number => {
 
   // if 0
   if (value === 0) {
     return 0;
-  };
+  }
 
   let _stringValue = value.toString();
 
   if (_stringValue.length <= 2) {
     return value * 3600;
-  };
+  }
 
   if (_stringValue.length === 3) {
     let [_hours, _minutes] = _stringValue.split(".");
@@ -95,7 +78,7 @@ const valueToSeconds = (value: number): number => {
     let _minInSec = Number(_minutes) * 10 * 60;
 
     return _hoursInSec + _minInSec;
-  };
+  }
 };
 
 /**
@@ -116,7 +99,7 @@ const objHasProperty = (list: string[], rowData: object): [boolean, string] => {
       _msg = `${list[columnIndex]} is missing`;
       break;
     }
-  };
+  }
 
   return [_valid, _msg];
 };
@@ -143,4 +126,8 @@ const getWeekAndYear = (param: Date): [string, string] => {
   return [_week.toString(), _year.toString()];
 };
 
-export { getRandomInt, delay, weekToDate, valueToSeconds, objHasProperty, getWeekAndYear };
+const compareWeekPeriod = (_weekA: IUserWeek, _weekB: IUserWeek) => {
+  return _weekA.week - _weekB.week;
+};
+
+export { getRandomInt, delay, weekToDate, valueToSeconds, objHasProperty, getWeekAndYear, compareWeekPeriod };

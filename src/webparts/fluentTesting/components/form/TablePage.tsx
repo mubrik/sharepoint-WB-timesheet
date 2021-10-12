@@ -25,6 +25,8 @@ import {
   RowSelectedEvent,
   CellValueChangedEvent,
   VirtualRowRemovedEvent,
+  ComponentStateChangedEvent,
+  RowDataChangedEvent
 } from "@ag-grid-community/all-modules";
 import { AgGridReact, AgGridColumn } from "@ag-grid-community/react";
 import { useMediaQuery } from "react-responsive";
@@ -236,33 +238,33 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps) => {
     // when cell value changes
     event.api.addEventListener(
       "cellValueChanged",
-      (event: CellValueChangedEvent) => {
-        let eventColumn = event.colDef.field;
+      (_event: CellValueChangedEvent) => {
+        let eventColumn = _event.colDef.field;
         // column a in week
         if (weekDays.includes(eventColumn)) {
           // calculate total time
           console.log("time cell chng");
-          calculateTotalTime(event.api);
+          calculateTotalTime(_event.api);
         } else if (arrToValidate.includes(eventColumn)) {
           // validate entries
           console.log("proj/task cell chng");
-          validateDataEntries(event.api);
+          validateDataEntries(_event.api);
         }
       }
     );
     // when row removed
     event.api.addEventListener(
       "virtualRowRemoved",
-      (event: VirtualRowRemovedEvent) => {
+      (_event: VirtualRowRemovedEvent) => {
         console.log("row removed");
-        validateDataEntries(event.api);
+        validateDataEntries(_event.api);
       }
     );
     // handle rowselected state
-    event.api.addEventListener("rowSelected", (event: RowSelectedEvent) => {
+    event.api.addEventListener("rowSelected", (_event: RowSelectedEvent) => {
       // check if row is actually selected, event triggers for previousselect when switching select
       // get index
-      let row = event.rowIndex;
+      let row = _event.rowIndex;
       // if row === null, row has been removed by table input control and set row already called
       if (row === null) {
         return;
@@ -277,10 +279,10 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps) => {
         }
       });
     });
-    event.api.addEventListener("componentStateChanged", (event) =>
-      console.log(event)
+    event.api.addEventListener("componentStateChanged", (_event:ComponentStateChangedEvent) =>
+      console.log(_event)
     );
-    event.api.addEventListener("dataChanged", (event) => console.log(event));
+    event.api.addEventListener("dataChanged", (_event: RowDataChangedEvent) => console.log(_event));
   };
   // utils
   // calculate  total time in time cells
@@ -292,7 +294,7 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps) => {
     // total
     let totalTimeInSec = 0;
 
-    _gridApi.forEachNode((rowNode, index) => {
+    _gridApi.forEachNode((rowNode, _) => {
       // get row data
       let rowdata = { ...rowNode.data };
       // loop over every column, if a weekday column, calculate time in secs and add it
@@ -313,9 +315,6 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps) => {
 
     // if grid api valid
     if (_gridApi === null) return false;
-
-    // columns to validate
-    const arrToValidate = ["Project", "Task"];
     // iteration control
     let isValid = true;
     // row number
@@ -442,7 +441,7 @@ const TableMainForm: React.FunctionComponent<ITableControlProps> = (
   const large = useMediaQuery({ minWidth: 480, maxWidth: 639 });
   const xlarge = useMediaQuery({ minWidth: 640, maxWidth: 1023 });
   const xxlarge = useMediaQuery({ minWidth: 1024, maxWidth: 1365 });
-  const xxxlarge = useMediaQuery({ minWidth: 1366, maxWidth: 1920 });
+  // const xxxlarge = useMediaQuery({ minWidth: 1366, maxWidth: 1920 });
   // props
   let _totalTimeInSec = props.totalHoursInSec;
 
@@ -452,13 +451,6 @@ const TableMainForm: React.FunctionComponent<ITableControlProps> = (
   const { date: dateValue }: { date: Date } = React.useContext(DateContext);
   // date list hook
   const selectedDates = useGetDatesHook(dateValue ? dateValue : null);
-  // check box
-  const checkboxSelection = function (params) {
-    return params.columnApi.getRowGroupColumns().length === 0;
-  };
-  const headerCheckboxSelection = function (params) {
-    return params.columnApi.getRowGroupColumns().length === 0;
-  };
   // format date column labels
   const formatLabel = (day: string, index: number): string => {
     // if date is null for some reason
@@ -523,14 +515,6 @@ const TableMainForm: React.FunctionComponent<ITableControlProps> = (
 
   return (
     <>
-      {/* <div>
-        <div>{small && "is small"}</div>
-        <div>{medium && "is medium"}</div>
-        <div>{large && "is large"}</div>
-        <div>{xlarge && "is xlarge"}</div>
-        <div>{xxlarge && "is xxlarge"}</div>
-        <div>{xxxlarge && "is xxxlarge"}</div>
-      </div> */}
       <Stack
         horizontal
         wrap
@@ -569,8 +553,8 @@ const TableMainForm: React.FunctionComponent<ITableControlProps> = (
             {...choiceColProps}
             field="Project"
             cellEditorParams={{ values: projectOptions }}
-            checkboxSelection={checkboxSelection}
-            headerCheckboxSelection={headerCheckboxSelection}
+            checkboxSelection={true}
+            headerCheckboxSelection={true}
           />
           <AgGridColumn
             {...choiceColProps}
@@ -706,7 +690,7 @@ const TableInputControl: React.FunctionComponent<ITableControlProps> = (
   };
 
   // experimental, upload excel
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = () => {
     // get ref
     let fileElem: HTMLInputElement = uploadRef.current;
     // get file
@@ -724,7 +708,7 @@ const TableInputControl: React.FunctionComponent<ITableControlProps> = (
     // make a reader
     let reader = new FileReader();
     // set function on load of reader
-    reader.onload = function (e) {
+    reader.onload = () => {
       var data = new Uint8Array(reader.result as ArrayBuffer);
       // xlsx read the data
       var workbook = XLSX.read(data, { type: "array" });
@@ -764,7 +748,7 @@ const TableInputControl: React.FunctionComponent<ITableControlProps> = (
     // iterate over each row in sheet pulling out the columns we're expecting
     while (worksheet["A" + rowIndex]) {
       let row = {};
-      Object.keys(columns).forEach(function (column) {
+      Object.keys(columns).forEach((column) => {
         row[columns[column]] = worksheet[column + rowIndex].w;
       });
       // push into row data
@@ -897,18 +881,18 @@ const TableDateControl: React.FunctionComponent<ITableControlProps> = (
   }, [date]);
 
   // handle date selected
-  const handleDateSelected = (date: Date | null | undefined) => {
+  const handleDateSelected = (_date: Date | null | undefined) => {
     // do something
-    setDate(date);
+    setDate(_date);
   };
 
   // format label to show week
-  const formatLabel = (date: Date | null): string => {
-    if (date === null) {
+  const formatLabel = (_date: Date | null): string => {
+    if (_date === null) {
       return "Select date";
     }
     // get week and year
-    let [_week, _year] = getWeekAndYear(date);
+    let [_week, _year] = getWeekAndYear(_date);
     return `Year: ${_year} Week: ${_week}`;
   };
 
@@ -936,7 +920,7 @@ const TableDateControl: React.FunctionComponent<ITableControlProps> = (
             ariaLabel="Select a date"
             onSelectDate={handleDateSelected}
             minDate={new Date(2019, 11, 1)}
-            maxDate={new Date(2021, 12, 31)}
+            maxDate={new Date()}
           />
         </>
       )}
@@ -989,7 +973,7 @@ const TableSaveControl: React.FunctionComponent<ITableControlProps> = (
     let _weekData: IUserWeekData[] = [];
 
     // use grid api
-    props.api.forEachNode((rowNode, index) => {
+    props.api.forEachNode((rowNode, _) => {
       // not decided if to remove empty node or to fill blank data, blank data for now
       _weekData.push({
         id: getRandomInt(8),
