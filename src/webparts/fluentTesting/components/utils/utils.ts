@@ -1,6 +1,8 @@
 import * as React from 'react';
 import { getWeek, getYear } from 'date-fns';
 import { IUserWeek } from '../sampleData';
+import { ISPFilteredObj } from '../../controller/server';
+import { FullWidthKeys } from 'ag-grid-community/dist/lib/rendering/row/rowCtrl';
 
 export const stylesDanger = {
   root: [
@@ -125,9 +127,256 @@ const getWeekAndYear = (param: Date): [string, string] => {
 
   return [_week.toString(), _year.toString()];
 };
-
+/* compare for sort */
 const compareWeekPeriod = (_weekA: IUserWeek, _weekB: IUserWeek) => {
   return _weekA.week - _weekB.week;
 };
 
-export { getRandomInt, delay, weekToDate, valueToSeconds, objHasProperty, getWeekAndYear, compareWeekPeriod };
+interface IStateData {
+  years: {
+    full: []
+  };
+  weeks: {};
+  items: {};
+}
+const prepareUserData2 = (param: ISPFilteredObj[]) => {
+  // new arr, no mutate
+  let _spArr = [...param];
+  // main, mutate
+  let _mainData = {
+    years: {
+      full: []
+    },
+    weeks: {},
+    items: {}
+  };
+
+  _spArr.forEach(dataObj => {
+
+    // vars
+    let _year = dataObj.Year;
+    let _week = dataObj.Week;
+
+    // check if year property is not present
+    if (!(_year in _mainData.years)) {
+      // add year property = an array of weeks
+      _mainData.years = {
+        ..._mainData.years,
+        // year is an array of weeks
+        [_year]: [_week],
+        // add year to full year array
+        full: [
+          ..._mainData.years.full,
+          _year
+        ]
+      }
+    } else {
+      // weeks in current year
+      let arrWeeksInYear: string[] = [..._mainData.years[_year]];
+      // check if week doesnt exist
+      if (!arrWeeksInYear.includes(_week)){
+        _mainData.years[_year] = [
+          ...arrWeeksInYear,
+          _week
+        ]
+      }
+    }
+
+    // if week property doesnt exist in weeks
+    if (!(_week in _mainData.weeks)) {
+      // create obj
+      _mainData.weeks = {
+        ..._mainData.weeks,
+        // week is array of ids
+        [_week]: [
+          {
+            id: dataObj.Id,
+            year: dataObj.Year,
+            status: dataObj.Status
+          }
+        ] 
+      }
+    } else {
+      // mutate
+      _mainData.weeks[_week] = [
+        ..._mainData.weeks[_week],
+        {
+          id: dataObj.Id,
+          year: dataObj.Year,
+          status: dataObj.Status
+        }
+      ]
+    }
+
+    // items, just add in, id is uniq
+    _mainData.items = {
+      ..._mainData.items,
+      [dataObj.Id]: {
+        week: +dataObj.Week,
+        year: +dataObj.Year,
+        status: dataObj.Status,
+        Project: dataObj.Projects, 
+        Location: dataObj.Location,
+        Description: dataObj.Description, 
+        FreshService: dataObj.FreshService, 
+        Task:dataObj.Task,
+        monday: dataObj.Monday,
+        tuesday: dataObj.Tuesday,
+        wednesday: dataObj.Wednesday,
+        thursday: dataObj.Thursday,
+        friday: dataObj.Friday,
+        saturday: dataObj.Saturday,
+        sunday: dataObj.Sunday,
+      }
+    }
+  });
+
+  let sampleData = {
+    fullYears: _mainData.years.full,
+  }
+  
+  // iterate years
+  _mainData.years.full.forEach(year => {
+    // empty arr
+    let blank = [];
+    // make yera property
+    sampleData[year] = {};
+    // iterate over weeks
+    Object.keys(_mainData.weeks).forEach(weekKey => {
+      if (_mainData.weeks[weekKey][year] === year) {
+
+      }
+    });
+  });
+
+  console.log(_mainData)
+  return _mainData;
+};
+
+const prepareUserData = (param: ISPFilteredObj[]) => {
+  // new arr, no mutate
+  let _spArr = [...param];
+  // main, mutate
+  let _mainData = {
+    years: {
+    },
+    weeks: {},
+    items: {}
+  };
+
+  _spArr.forEach(dataObj => {
+
+    // vars
+    let _year = dataObj.Year;
+    let _week = dataObj.Week;
+
+    // check if necessary properties are created first create if not
+    // year not in
+    if (!(_year in _mainData.years)) {
+      _mainData.years = {
+        // year is an array of weeks
+        [_year] : {
+          weeksInYear: [],
+          // week is anarray containing ids of week item
+          [_week]: []
+        }
+      }
+    } else {
+      // year can be in and no week in
+      // year in, check if week isn't in
+      if (!(_week in _mainData.years[_year])) {
+        _mainData.years[_year] = {
+          ..._mainData.years[_year],
+          // week is anarray containing ids of week item
+          [_week]: []
+        }
+      }
+    }
+
+    // variable setting
+    let _weeksInYr: string[] = [..._mainData.years[_year]["weekInYears"]];
+    let _arrOfWeekIds: string[] = [..._mainData.years[_year][_week]];
+
+    // mutating
+    if (!_weeksInYr.includes(_week)) {
+      _mainData.years[_year]["weekInYears"] = [
+        ..._weeksInYr,
+        _week
+      ]
+    }
+    // add id of current obj to year, week array
+    _mainData.years[_year][_week] = [
+
+    ]
+
+    // check if year property is not present
+    if (!(_year in _mainData.years)) {
+      // add year property = an array of weeks
+      _mainData.years = {
+        ..._mainData.years,
+        // year is an array of weeks
+        [_year] : [_week]
+      }
+    } else {
+      // weeks in current year
+      let arrWeeksInYear: string[] = [..._mainData.years[_year]];
+      // check if week doesnt exist
+      if (!arrWeeksInYear.includes(_week)){
+        _mainData.years[_year] = [
+          ...arrWeeksInYear,
+          _week
+        ]
+      }
+    }
+
+    // if week property doesnt exist in weeks
+    if (!(_week in _mainData.weeks)) {
+      // create obj
+      _mainData.weeks = {
+        ..._mainData.weeks,
+        // week is array of ids
+        [_week]: [
+          dataObj.Id
+        ] 
+      }
+    } else {
+      // mutate
+      _mainData.weeks[_week] = [
+        ..._mainData.weeks[_week],
+        dataObj.Id
+      ]
+    }
+
+    // items, just add in
+    _mainData.items = {
+      ..._mainData.items,
+      [dataObj.Id]: {
+        week: +dataObj.Week,
+        year: +dataObj.Year,
+        status: dataObj.Status,
+        Project: dataObj.Projects, 
+        Location: dataObj.Location,
+        Description: dataObj.Description, 
+        FreshService: dataObj.FreshService, 
+        Task:dataObj.Task,
+        monday: dataObj.Monday,
+        tuesday: dataObj.Tuesday,
+        wednesday: dataObj.Wednesday,
+        thursday: dataObj.Thursday,
+        friday: dataObj.Friday,
+        saturday: dataObj.Saturday,
+        sunday: dataObj.Sunday,
+      }
+    }
+  });
+
+  console.log(_mainData)
+  return _mainData;
+};
+
+export { getRandomInt, delay, 
+  weekToDate, valueToSeconds, 
+  objHasProperty, getWeekAndYear, 
+  compareWeekPeriod, prepareUserData,
+  prepareUserData2, IStateData
+};

@@ -2,11 +2,18 @@ import { IGroup } from "office-ui-fabric-react";
 // types
 export interface IUserWeekData {
   id: number;
-  Project: string;
-  Location: string;
-  Task: string;
-  Description?: string;
-  FreshService?: string;
+  project: string;
+  location: string;
+  task: string;
+  description?: string;
+  freshService?: string;
+  monday: string;
+  tuesday: string;
+  wednesday: string;
+  thursday: string;
+  friday: string;
+  saturday: string;
+  sunday: string;
 }
 
 export interface IUserYear {
@@ -26,23 +33,23 @@ export interface IUserWeek {
 
 // data
 const times = {
-  "monday": "1.0",
-  "tuesday": "1.0",
-  "wednesday": "1.0",
-  "thursday": "1.0",
-  "friday": "1.0",
-  "saturday": "1.0",
-  "sunday": "1.0",
+  monday: "1.0",
+  tuesday: "1.0",
+  wednesday: "1.0",
+  thursday: "1.0",
+  friday: "1.0",
+  saturday: "1.0",
+  sunday: "1.0",
 }
 
 export const listData:IUserWeekData[] = [
-  {id: 0, Project: "IT End User Support", Location: "Remote", Task:"SuccessFactors", ...times },
-  {id: 1, Project: "IT End User Support", Location: "Obajana",  Task:"SuccessFactors", ...times },
-  {id: 2, Project: "Troubleshooting", Location: "Ibese",  Task:"Weighbridge", ...times },
-  {id: 3, Project: "IT End User Support", Location: "Ibese",  Task:"Weighbridge", ...times },
-  {id: 4, Project: "IT End User Support", Location: "Obajana",  Task:"Weighbridge", ...times },
-  {id: 5, Project: "Troubleshooting", Location: "Ibese",  Task:"Weighbridge", ...times },
-  {id: 6, Project: "IT End User Support", Location: "Remote",  Task:"Weighbridge", ...times },
+  {id: 0, project: "IT End User Support", location: "Remote", task:"SuccessFactors", ...times },
+  {id: 1, project: "IT End User Support", location: "Obajana",  task:"SuccessFactors", ...times },
+  {id: 2, project: "Troubleshooting", location: "Ibese",  task:"Weighbridge", ...times },
+  {id: 3, project: "IT End User Support", location: "Ibese",  task:"Weighbridge", ...times },
+  {id: 4, project: "IT End User Support", location: "Obajana",  task:"Weighbridge", ...times },
+  {id: 5, project: "Troubleshooting", location: "Ibese",  task:"Weighbridge", ...times },
+  {id: 6, project: "IT End User Support", location: "Remote",  task:"Weighbridge", ...times },
 ];
 
 export const testData:IUserYear = {

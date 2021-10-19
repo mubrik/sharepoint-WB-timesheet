@@ -1,7 +1,8 @@
 import * as React from "react";
 // context data
-import { DateContext, TableDataContext } from "../FluentTesting";
+import { DateContext, TableDataContext, RequestContext } from "../FluentTesting";
 import { IAction, StoreData, IState } from "../FluentTesting";
+import { IServer } from "../../controller/server";
 // UI
 import {
   PrimaryButton,
@@ -209,7 +210,7 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps) => {
     "saturday",
     "sunday",
   ];
-  const arrToValidate = ["Project", "Task"];
+  const arrToValidate = ["project", "task"];
 
   // exposes grid api on grid ready event
   const handleGridReady = (event: GridReadyEvent) => {
@@ -310,9 +311,10 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps) => {
   };
   // validate data in table
   const validateDataEntries = (api: GridApi = gridApi): boolean => {
+
+    console.log("validating");
     // grid api
     let _gridApi = api ? api : gridApi;
-
     // if grid api valid
     if (_gridApi === null) return false;
     // iteration control
@@ -510,7 +512,8 @@ const TableMainForm: React.FunctionComponent<ITableControlProps> = (
       : 212,
     resizable: small ? false : true,
     editable: true,
-    field: "Activity Desription",
+    field: "description",
+    headerName: "Activity Desription",
   };
 
   return (
@@ -551,25 +554,29 @@ const TableMainForm: React.FunctionComponent<ITableControlProps> = (
         >
           <AgGridColumn
             {...choiceColProps}
-            field="Project"
+            field="project"
+            headerName="Project"
             cellEditorParams={{ values: projectOptions }}
             checkboxSelection={true}
             headerCheckboxSelection={true}
           />
           <AgGridColumn
             {...choiceColProps}
-            field="Location"
+            field="location"
+            headerName="Location"
             cellEditorParams={{ cellHeight: 200, values: locationOptions }}
           />
           <AgGridColumn
             {...choiceColProps}
-            field="Task"
+            field="task"
+            headerName="Task"
             cellEditorParams={{ cellHeight: 200, values: taskOptions }}
           />
           <AgGridColumn
             {...choiceColProps}
             cellEditor={"agTextCellEditor"}
-            field="FreshService ID"
+            field="freshService"
+            headerName= "FreshService ID"
           />
           <AgGridColumn {...activityColProps} />
           <AgGridColumn
@@ -728,17 +735,18 @@ const TableInputControl: React.FunctionComponent<ITableControlProps> = (
     let worksheet = workbook.Sheets[firstSheetName];
     // columns
     let columns = {
-      A: "Project",
-      B: "Task",
-      C: "Location",
-      D: "Activity Desription",
-      E: "monday",
-      F: "tuesday",
-      G: "wednesday",
-      H: "thursday",
-      I: "friday",
-      J: "saturday",
-      K: "sunday",
+      A: "project",
+      B: "task",
+      C: "location",
+      D: "freshService",
+      E: "description",
+      F: "monday",
+      G: "tuesday",
+      H: "wednesday",
+      I: "thursday",
+      J: "friday",
+      K: "saturday",
+      L: "sunday",
     };
 
     // row data
@@ -760,10 +768,10 @@ const TableInputControl: React.FunctionComponent<ITableControlProps> = (
     props.api.setRowData(rowData);
 
     // validate data entries
-    props.validateDataEntries();
+    props.validateDataEntries(props.api);
 
     // calulate time
-    props.calculateTotalTime();
+    props.calculateTotalTime(props.api);
   };
   // uppload click
   const handleUploadClick = () => {
@@ -946,6 +954,7 @@ const TableSaveControl: React.FunctionComponent<ITableControlProps> = (
     React.useContext(Validation);
   const { dispatchStore }: { dispatchStore: React.Dispatch<IAction> } =
     React.useContext(StoreData);
+  const request:IServer = React.useContext(RequestContext);
   // states
   const [isLoading, setIsLoading] = React.useState(false);
   const [notification, setNotification] = React.useState(false);
@@ -1001,6 +1010,8 @@ const TableSaveControl: React.FunctionComponent<ITableControlProps> = (
 
     // emulating a post request to a server  that returns successful instance
     let response = delay(3000, _postData);
+    // testing
+    request.createDraft(_postData);
 
     response.then((result) => {
       console.log(result);

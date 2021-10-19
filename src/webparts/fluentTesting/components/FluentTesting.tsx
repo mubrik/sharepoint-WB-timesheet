@@ -11,10 +11,14 @@ import TablePage from "./form/TablePage";
 // sample data and types
 import { IUserYear, IUserWeek, testData, IUserWeekData } from "./sampleData";
 import { WebPartContext } from "@microsoft/sp-webpart-base";
+import {IServer} from '../controller/server';
+// test
+import {prepareUserData2, prepareUserData} from "./utils/utils";
 
 export interface IMainProps {
   description: string;
   context: WebPartContext;
+  request: IServer;
 }
 // state type
 export type IState = {
@@ -61,6 +65,7 @@ const myReducer = (state: IState, action: IAction): IState => {
 // context to pass down date and store data
 export const StoreData = React.createContext(null);
 export const DateContext = React.createContext(null);
+export const RequestContext = React.createContext(null);
 // testing
 export const TableDataContext = React.createContext(null);
 
@@ -94,6 +99,10 @@ const MainPage: React.FunctionComponent<IMainProps> = (props: IMainProps) => {
     });
     // 5sec delay for actual data
     setTimeout(() => {
+      props.request.getUserList()
+        .then(lst => {
+          prepareUserData2(lst);
+        });
       dispatchStore({
         type: "updateAll",
         payload: {
@@ -141,6 +150,7 @@ const MainPage: React.FunctionComponent<IMainProps> = (props: IMainProps) => {
     <ThemeProvider theme={myTheme}>
       <Stack tokens={{ childrenGap: 8, padding: 2 }}>
         <StoreData.Provider value={{ data, dispatchStore }}>
+        <RequestContext.Provider value={props.request}>
           <DateContext.Provider value={{ date, setDate }}>
             <Stack horizontal>
               <NavBar pageState={pageState} setPageState={setPageState} />
@@ -159,6 +169,7 @@ const MainPage: React.FunctionComponent<IMainProps> = (props: IMainProps) => {
               </Stack>
             </TableDataContext.Provider>
           </DateContext.Provider>
+        </RequestContext.Provider>
         </StoreData.Provider>
       </Stack>
     </ThemeProvider>

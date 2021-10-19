@@ -134,6 +134,11 @@ const DraftPage: React.FunctionComponent<IDraftProps> = () => {
     }
   }, [storeData]);
 
+  // online effect
+  React.useEffect(() => {
+
+  },[]);
+
   // use effect for handling filter states change
   React.useEffect(() => {
     const _year = yearFilter.key;
