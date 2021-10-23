@@ -9,30 +9,34 @@ import { NavBar } from "./nav/Navbar";
 import DraftPage from './draft/DraftPage';
 import TablePage from "./form/TablePage";
 // sample data and types
-import { IUserYear, IUserWeek, testData, IUserWeekData } from "./sampleData";
+import { IUserWeek, IStoreState} from "./dataTypes";
 import { WebPartContext } from "@microsoft/sp-webpart-base";
 import {IServer} from '../controller/server';
 // test
-import {prepareUserData2, prepareUserData} from "./utils/utils";
+import {prepareUserData, createStateDataFromSharepoint} from "./utils/utils";
 
 export interface IMainProps {
   description: string;
   context: WebPartContext;
   request: IServer;
 }
-// state type
-export type IState = {
-  data: {} | IUserYear;
-  status: string;
+
+const initialData:IStoreState = {
+  data: {
+    yearList: [],
+    years: {},
+    items: {}
+  },
+  status: "idle"
 };
 // action types
 export type IAction =
-  | { type: "updateAll", payload: IState }
+  | { type: "updateAll", payload: IStoreState }
   | { type: "updateLoading", payload: { status: string } }
   | { type: "updateWeek", payload: { data: IUserWeek } };
 
 // reducer, leaving this here for readability, should move when bigger
-const myReducer = (state: IState, action: IAction): IState => {
+const myReducer = (state: IStoreState, action: IAction): IStoreState => {
   switch (action.type) {
     case "updateAll":
       return {
@@ -66,7 +70,6 @@ const myReducer = (state: IState, action: IAction): IState => {
 export const StoreData = React.createContext(null);
 export const DateContext = React.createContext(null);
 export const RequestContext = React.createContext(null);
-// testing
 export const TableDataContext = React.createContext(null);
 
 // main page for webpart, handles states for nav and others
@@ -77,9 +80,9 @@ const MainPage: React.FunctionComponent<IMainProps> = (props: IMainProps) => {
   // date selected
   const [date, setDate] = React.useState<Date | null>(null);
   // main data and dispatch store
-  const [data, dispatchStore] = React.useReducer(myReducer, { data: {}, status: "idle" });
+  const [data, dispatchStore] = React.useReducer(myReducer, initialData);
   // table form data
-  const [tableData, setTableData] = React.useState<IUserWeekData[] | []>([]);
+  const [tableData, setTableData] = React.useState<number[] | []>([]);
 
   // useeffect for width
   React.useEffect(() => {
@@ -101,15 +104,18 @@ const MainPage: React.FunctionComponent<IMainProps> = (props: IMainProps) => {
     setTimeout(() => {
       props.request.getUserList()
         .then(lst => {
-          prepareUserData2(lst);
+          let sample = prepareUserData(lst);
+          let sample2 = createStateDataFromSharepoint(lst);
+          console.log(sample);
+          console.log(sample2);
+          dispatchStore({
+            type: "updateAll",
+            payload: {
+              data: sample2,
+              status: "loaded",
+            }
+          });
         });
-      dispatchStore({
-        type: "updateAll",
-        payload: {
-          data: testData,
-          status: "loaded"
-        }
-      });
     }, 5000);
 
   }, []);

@@ -6,11 +6,9 @@ import {
   PrimaryButton,
   DefaultButton,
 } from "office-ui-fabric-react";
-import { IUserWeek, IUserWeekData } from "../sampleData";
+import { IUserWeekDataSet } from "../dataTypes";
 // react context
 import {
-  StoreData,
-  IState,
   DateContext,
   TableDataContext,
 } from "../FluentTesting";
@@ -25,7 +23,7 @@ const dialogContentProps = {
 
 interface IDialogProps {
   hidden: boolean;
-  weekData: IUserWeek;
+  weekData: IUserWeekDataSet;
   setPageState: (value: React.SetStateAction<string>) => void;
   setDraftDialog: React.Dispatch<React.SetStateAction<any>>;
 }
@@ -48,7 +46,7 @@ const DraftDialog: React.FunctionComponent<IDialogProps> = (
   const {
     setTableData,
   }: {
-    setTableData: React.Dispatch<React.SetStateAction<IUserWeekData[] | []>>;
+    setTableData: React.Dispatch<React.SetStateAction<number[] | []>>;
   } = React.useContext(TableDataContext);
 
   //effect for setting data
@@ -56,6 +54,7 @@ const DraftDialog: React.FunctionComponent<IDialogProps> = (
     // data from props
     let _weekData = props.weekData;
     let _hidden = props.hidden;
+    console.log(props);
 
     if (!_hidden) {
       // set data
@@ -77,11 +76,12 @@ const DraftDialog: React.FunctionComponent<IDialogProps> = (
     let _week = dialogData.weekData.week;
     let _year = dialogData.weekData.year;
     // date
-    let _date = weekToDate(_year, _week);
-    // set
+    let _date = weekToDate(+_year, +_week);
+    // set date
     setDate(_date);
-    // set datble date
-    setTableData(dialogData.weekData.data);
+    // set table data
+    console.log(dialogData);
+    setTableData(dialogData.weekData.itemIds);
     // change draft state
     props.setPageState("edit");
     // dismiss dialog

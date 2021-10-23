@@ -1,12 +1,14 @@
 import * as React from 'react';
 import { eachDayOfInterval, startOfWeek, endOfWeek } from 'date-fns';
+import { StoreData } from "../FluentTesting";
+import {IUserWeekData, IStoreState} from "../dataTypes";
 
 
 const useGetDatesHook = (dateObj: Date | null): Date[] | null => {
 
   if (dateObj === null) {
     return null;
-  };
+  }
 
   // get start and end date
   let startWeek = startOfWeek(dateObj, { weekStartsOn: 1 });
@@ -22,4 +24,26 @@ const useGetDatesHook = (dateObj: Date | null): Date[] | null => {
 
 };
 
-export { useGetDatesHook };
+const useGetTableDataFromStore = (param: number[]): IUserWeekData[] | [] => {
+
+  // react context
+  const { data: storeData }: { data: IStoreState } = React.useContext(StoreData);
+  // var
+  let arrToReturn: IUserWeekData[]  = [];
+  console.log(param);
+
+  if (param === undefined || param.length === 0) {
+    return arrToReturn;
+  }
+  // avoid mutate
+  let propArray = param.slice();
+  // loop
+  propArray.forEach(itemProp => {
+    arrToReturn.push(storeData.data.items[itemProp]);
+  });
+
+  return arrToReturn;
+
+};
+
+export { useGetDatesHook, useGetTableDataFromStore };

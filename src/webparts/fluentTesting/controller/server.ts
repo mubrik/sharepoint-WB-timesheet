@@ -1,6 +1,6 @@
-import { sp, Lists, ILists } from "@pnp/sp/presets/core";
+import { sp } from "@pnp/sp/presets/core";
 import { WebPartContext } from "@microsoft/sp-webpart-base";
-import { IUserWeek } from "../components/sampleData";
+import { IUserWeek } from "../components/dataTypes";
 
 const LIST_COLUMNS = [
   "User", "Week", "Status", "Projects", "Description",
@@ -14,8 +14,8 @@ export interface IServer {
   fetch: typeof sp;
   context: WebPartContext|null;
   getList: () => Promise<any[]>;
-  getUserList: () => Promise<any[]| ISPFilteredObj[]>
-  createDraft: (param: IUserWeek) => Promise<void>
+  getUserList: () => Promise<any[]| ISPFilteredObj[]>;
+  createDraft: (param: IUserWeek) => Promise<void>;
 }
 /* user data object received after filter*/
 export interface ISPFilteredObj {
@@ -45,7 +45,7 @@ class Server implements IServer {
   public context: WebPartContext|null;
 
   public constructor (context:WebPartContext ) {
-    this.context = context ? context : null
+    this.context = context ? context : null;
   }
 
   public getList = () => {
@@ -57,12 +57,12 @@ class Server implements IServer {
   public getUserList = () => {
     if (!this.context) {
       return new Promise(res => {
-        res([])
+        res([]);
       }) as Promise<[]>;
-    };
+    }
 
-    return this.fetch.web.lists.getByTitle("B4").items.select(...LIST_COLUMNS).filter("User eq '" + this.context.pageContext.user.loginName + "'").get()
-  };
+    return this.fetch.web.lists.getByTitle("B4").items.select(...LIST_COLUMNS).filter("User eq '" + this.context.pageContext.user.loginName + "'").get();
+  }
 
   public createDraft = async (param: IUserWeek) => {
     // slice
@@ -70,10 +70,10 @@ class Server implements IServer {
     // get list
     let list = this.fetch.web.lists.getByTitle("B4");
 
-    const entityTypeFullName = await list.getListItemEntityTypeFullName()
+    const entityTypeFullName = await list.getListItemEntityTypeFullName();
     // batch
     let batch = sp.web.createBatch();
-    // iterate 
+    // iterate
     _draft.data.forEach((weekData => {
       list.items.inBatch(batch).add({
         User: this.context.pageContext.user.loginName,
@@ -93,13 +93,13 @@ class Server implements IServer {
         Saturday: weekData.saturday,
         Sunday: weekData.sunday,
       }, entityTypeFullName)
-      .then(b => console.log(b))
-    }))
+      .then(b => console.log(b));
+    }));
 
     await batch.execute();
 
     console.log("Done");
-  };
+  }
 
   public updateDraft = async (param: IUserWeek, id: number) => {
     // slice
@@ -107,10 +107,10 @@ class Server implements IServer {
     // get list
     let list = this.fetch.web.lists.getByTitle("B4");
 
-    const entityTypeFullName = await list.getListItemEntityTypeFullName()
+    const entityTypeFullName = await list.getListItemEntityTypeFullName();
     // batch
     let batch = sp.web.createBatch();
-    // iterate 
+    // iterate
     _draft.data.forEach((weekData => {
       list.items.getById(id).inBatch(batch).update({
         User: this.context.pageContext.user.loginName,
@@ -130,13 +130,13 @@ class Server implements IServer {
         Saturday: weekData.saturday,
         Sunday: weekData.sunday,
       }, entityTypeFullName)
-      .then(b => console.log(b))
-    }))
+      .then(b => console.log(b));
+    }));
 
     await batch.execute();
 
     console.log("Done");
-  };
+  }
 }
 
 export default Server;

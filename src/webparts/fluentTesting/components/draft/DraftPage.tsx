@@ -1,6 +1,6 @@
 import * as React from 'react';
 // react context
-import { StoreData, IState } from "../FluentTesting";
+import { StoreData } from "../FluentTesting";
 // UI
 import {
   FocusZone,
@@ -15,12 +15,12 @@ import {
 import TablePage from '../form/TablePage';
 import DraftDialog from "./DraftDialog";
 // sample data types
-import { IUserWeek, IUserWeeks, IUserYear } from '../sampleData';
+import {IDraftProps, IDraftState} from "./draftTypes";
+import {IStoreState, IStoreYearWeekItem } from '../dataTypes';
 import {compareWeekPeriod} from "../utils/utils";
 
 // styles
 const gridCLasses = mergeStyleSets({
-
   mainGrid: {
     display: "flex",
     flexDirection: "row",
@@ -42,29 +42,15 @@ const gridCLasses = mergeStyleSets({
   }
 });
 
-// types
-export interface IDraftProps {
-  userData?: IUserYear;
-}
-
-interface IInitialState {
-  2020: IUserWeek[];
-  2021: IUserWeek[];
-  full: IUserWeek[];
-  status: string;
-}
 // initial draft list state
-const initialState: IInitialState = {
-  2020: [],
-  2021: [],
+const initialState: IDraftState = {
   full: [],
-  status: "idle"
 };
 
 const DraftPage: React.FunctionComponent<IDraftProps> = () => {
 
   // react context
-  const { data: storeData }: { data: IState } = React.useContext(StoreData);
+  const { data: storeData }: { data: IStoreState } = React.useContext(StoreData);
   // controlled input states
   const [yearFilter, setYearFilter] = React.useState<IDropdownOption>({ key: "full", text: "All" },);
   const [statusFilter, setStatusFilter] = React.useState<IDropdownOption>({ key: "full", text: "All" });
@@ -73,17 +59,19 @@ const DraftPage: React.FunctionComponent<IDraftProps> = () => {
   // page view state
   const [pageState, setPageState] = React.useState<string>("list");
   // list data, data list should be async set in production
-  const [draftData, setDraftData] = React.useState<IInitialState>(initialState);
-  const [shownItems, setShownItems] = React.useState<null | IUserWeek[]>(null);
+  const [draftData, setDraftData] = React.useState<IDraftState>(initialState);
+  const [shownItems, setShownItems] = React.useState<null | IStoreYearWeekItem[]>(null);
   // modal dialog state and data
   const [draftDialog, setDraftDialog] = React.useState({ hidden: true, data: null });
+  // year options
+  const [yearOptions, setYearOptions] = React.useState([{ key: "full", text: "All" }]);
 
   // year keys
-  const controlledYear = [
-    { key: "2020", text: "2020" },
-    { key: "2021", text: "2021" },
-    { key: "full", text: "All" },
-  ];
+  // let controlledYear = [
+  //   // { key: "2020", text: "2020" },
+  //   // { key: "2021", text: "2021" },
+  //   { key: "full", text: "All" },
+  // ];
 
   // status filter keys
   const controlledStatus = [
@@ -99,45 +87,49 @@ const DraftPage: React.FunctionComponent<IDraftProps> = () => {
     { key: "down", text: "Decending" },
   ];
 
-  // set data
-  React.useEffect(() => {
-    if (storeData.status === "loaded") {
-      // get data from different year and make a list
-      let weeksIn2020: IUserWeek[] = [];
-      let weeksIn2021: IUserWeek[] = [];
-      // objects with data
-      let _data20: IUserWeeks = storeData.data["2020"];
-      let _data21: IUserWeeks = storeData.data["2021"];
-      // loop 2020 keys
-      Object.keys(_data20).forEach((key) => {
-        weeksIn2020.push(_data20[key]);
-      });
-      // loop 2021 keys
-      Object.keys(_data21).forEach((key) => {
-        weeksIn2021.push(_data21[key]);
-      });
-      // concat
-      let fullWeeksArray: IUserWeek[] = weeksIn2020.concat(weeksIn2021);
-      // set data
-      setDraftData((oldData) => {
-        return {
-          ...oldData,
-          2020: weeksIn2020,
-          2021: weeksIn2021,
-          full: fullWeeksArray,
-          status: "loaded"
-        };
-      });
-      // set shown list
-      setShownItems(fullWeeksArray);
-
-    }
-  }, [storeData]);
-
   // online effect
   React.useEffect(() => {
+    // sample
+    // create case for empty obj later
+    console.log(storeData.data);
+    let data = {...storeData.data};
 
-  },[]);
+    let _draftData: IDraftState = {
+      full: []
+    };
+    // years arr
+    let _yearsList = data.yearList;
+    // iterate
+    _yearsList.forEach(year => {
+      // create year
+      _draftData[year] = [...data.years[year]];
+      // add items to full list
+      _draftData.full = [
+        ..._draftData.full,
+        ...data.years[year],
+      ];
+      // controlled year
+      setYearOptions((prev) => {
+        return [
+          ...prev,
+          { key: year, text: year }
+        ];
+      });
+    });
+
+    // set data
+    setDraftData((oldData) => {
+      return {
+        ...oldData,
+        ..._draftData,
+      };
+    });
+
+    // set shown arr
+    setShownItems(_draftData.full);
+
+    console.log("statedate", _draftData);
+  },[storeData]);
 
   // use effect for handling filter states change
   React.useEffect(() => {
@@ -146,7 +138,7 @@ const DraftPage: React.FunctionComponent<IDraftProps> = () => {
     const _sort = sort.key;
 
     // array year filtered
-    let arrayToSet: Array<IUserWeek> = [...draftData[_year]];
+    let arrayToSet: Array<IStoreYearWeekItem> = [...draftData[_year]];
 
     // check if data empty
     if (arrayToSet.length === 0) {
@@ -177,7 +169,7 @@ const DraftPage: React.FunctionComponent<IDraftProps> = () => {
   },[yearFilter, statusFilter, weekFilter, draftData, sort]);
 
   // on item click, dialog handler
-  const handleListItemClick = (weekData: IUserWeek) => {
+  const handleListItemClick = (weekData: IStoreYearWeekItem) => {
     // set draft dialog
     setDraftDialog({
       hidden: false,
@@ -187,7 +179,7 @@ const DraftPage: React.FunctionComponent<IDraftProps> = () => {
   // how to render a page list
   const onRenderPage = React.useCallback((props:IPageProps) => {
     // get list item
-    let _itemsList: IUserWeek[] = props.page.items;
+    let _itemsList: IStoreYearWeekItem[] = props.page.items;
     console.log(props);
 
     return (
@@ -241,7 +233,7 @@ const DraftPage: React.FunctionComponent<IDraftProps> = () => {
               <Dropdown
                 selectedKey={yearFilter ? yearFilter.key : "full"}
                 label="Filter Year"
-                options={controlledYear}
+                options={yearOptions}
                 onChange={(_,item) => setYearFilter(item)}
               />
             </StackItem>

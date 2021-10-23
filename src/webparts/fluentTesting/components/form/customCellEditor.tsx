@@ -1,8 +1,6 @@
 import * as React from "react";
 // aggrid
 import { ValueFormatterParams } from "@ag-grid-community/core";
-// utils
-import { valueToSeconds } from "../utils/utils";
 
 interface IEditorProps extends React.ComponentPropsWithoutRef<any> {
   children?: React.ReactNode;
@@ -11,9 +9,8 @@ interface IEditorProps extends React.ComponentPropsWithoutRef<any> {
 const TimeEditor = React.forwardRef((props: IEditorProps, ref) => {
   // check for prop value
   let timeVal = props.value ? parseFloat(props.value) : 0;
-
-  const [value, setValue] = React.useState<string>("");
-  const [valuetest, setValueTest] = React.useState<number>(timeVal);
+  // states
+  const [inputValue, setInputValue] = React.useState<number>(timeVal);
   const refInput = React.useRef(null);
 
   React.useEffect(() => {
@@ -26,7 +23,7 @@ const TimeEditor = React.forwardRef((props: IEditorProps, ref) => {
     return {
       // the final value to send to the grid, on completion of editing
       getValue() {
-        return valuetest;
+        return inputValue;
       },
 
       // Gets called once before editing starts, to give editor a chance to
@@ -39,11 +36,11 @@ const TimeEditor = React.forwardRef((props: IEditorProps, ref) => {
       // If you return true, then the result of the edit will be ignored.
       isCancelAfterEnd() {
         // our editor will reject any value greater than 24
-        if (valuetest > 24 || valuetest < 0) {
+        if (inputValue > 24 || inputValue < 0) {
           return true;
         }
 
-        let valueString = valuetest.toString();
+        let valueString = inputValue.toString();
         // anything not in 0.0, 10.0 is invalid
         if (valueString.length >= 4) {
           return true;
@@ -62,12 +59,12 @@ const TimeEditor = React.forwardRef((props: IEditorProps, ref) => {
     };
   });
 
-  const parseValue = (value: string): number => {
-    if (Number.isNaN(Number.parseFloat(value))) {
+  const parseValue = (param: string): number => {
+    if (Number.isNaN(Number.parseFloat(param))) {
       return 0;
     }
 
-    return parseFloat(value);
+    return parseFloat(param);
   };
 
   return (
@@ -77,8 +74,8 @@ const TimeEditor = React.forwardRef((props: IEditorProps, ref) => {
       max={24}
       placeholder="H.M"
       ref={refInput}
-      value={valuetest}
-      onChange={(event) => setValueTest(parseValue(event.target.value))}
+      value={inputValue}
+      onChange={(event) => setInputValue(parseValue(event.target.value))}
       style={{ width: "100%" }}
     />
   );

@@ -1,8 +1,6 @@
-import * as React from 'react';
 import { getWeek, getYear } from 'date-fns';
-import { IUserWeek } from '../sampleData';
+import { IUserWeek, IUserWeekDataSet, IStoreMainData, IStoreYearWeekItem } from '../dataTypes';
 import { ISPFilteredObj } from '../../controller/server';
-import { FullWidthKeys } from 'ag-grid-community/dist/lib/rendering/row/rowCtrl';
 
 export const stylesDanger = {
   root: [
@@ -128,8 +126,8 @@ const getWeekAndYear = (param: Date): [string, string] => {
   return [_week.toString(), _year.toString()];
 };
 /* compare for sort */
-const compareWeekPeriod = (_weekA: IUserWeek, _weekB: IUserWeek) => {
-  return _weekA.week - _weekB.week;
+const compareWeekPeriod = (_weekA: IUserWeekDataSet, _weekB: IUserWeekDataSet) => {
+  return +_weekA.week - +_weekB.week;
 };
 
 interface IStateData {
@@ -139,226 +137,118 @@ interface IStateData {
   weeks: {};
   items: {};
 }
-const prepareUserData2 = (param: ISPFilteredObj[]) => {
-  // new arr, no mutate
-  let _spArr = [...param];
-  // main, mutate
-  let _mainData = {
-    years: {
-      full: []
-    },
-    weeks: {},
-    items: {}
+
+interface IStateYearObj {
+  weeksInYear: string[];
+  [key: string]: {
+    itemsIds: number[];
+    status: string;
+    week: string;
+    year: string;
+  } | any;
+}
+
+export interface IMainData {
+  yearList: string[];
+  years: {
+    [key: string]: IStateYearObj;
   };
+  items: {
+    [key: number]: IStateItem;
+  };
+}
 
-  _spArr.forEach(dataObj => {
-
-    // vars
-    let _year = dataObj.Year;
-    let _week = dataObj.Week;
-
-    // check if year property is not present
-    if (!(_year in _mainData.years)) {
-      // add year property = an array of weeks
-      _mainData.years = {
-        ..._mainData.years,
-        // year is an array of weeks
-        [_year]: [_week],
-        // add year to full year array
-        full: [
-          ..._mainData.years.full,
-          _year
-        ]
-      }
-    } else {
-      // weeks in current year
-      let arrWeeksInYear: string[] = [..._mainData.years[_year]];
-      // check if week doesnt exist
-      if (!arrWeeksInYear.includes(_week)){
-        _mainData.years[_year] = [
-          ...arrWeeksInYear,
-          _week
-        ]
-      }
-    }
-
-    // if week property doesnt exist in weeks
-    if (!(_week in _mainData.weeks)) {
-      // create obj
-      _mainData.weeks = {
-        ..._mainData.weeks,
-        // week is array of ids
-        [_week]: [
-          {
-            id: dataObj.Id,
-            year: dataObj.Year,
-            status: dataObj.Status
-          }
-        ] 
-      }
-    } else {
-      // mutate
-      _mainData.weeks[_week] = [
-        ..._mainData.weeks[_week],
-        {
-          id: dataObj.Id,
-          year: dataObj.Year,
-          status: dataObj.Status
-        }
-      ]
-    }
-
-    // items, just add in, id is uniq
-    _mainData.items = {
-      ..._mainData.items,
-      [dataObj.Id]: {
-        week: +dataObj.Week,
-        year: +dataObj.Year,
-        status: dataObj.Status,
-        Project: dataObj.Projects, 
-        Location: dataObj.Location,
-        Description: dataObj.Description, 
-        FreshService: dataObj.FreshService, 
-        Task:dataObj.Task,
-        monday: dataObj.Monday,
-        tuesday: dataObj.Tuesday,
-        wednesday: dataObj.Wednesday,
-        thursday: dataObj.Thursday,
-        friday: dataObj.Friday,
-        saturday: dataObj.Saturday,
-        sunday: dataObj.Sunday,
-      }
-    }
-  });
-
-  let sampleData = {
-    fullYears: _mainData.years.full,
-  }
-  
-  // iterate years
-  _mainData.years.full.forEach(year => {
-    // empty arr
-    let blank = [];
-    // make yera property
-    sampleData[year] = {};
-    // iterate over weeks
-    Object.keys(_mainData.weeks).forEach(weekKey => {
-      if (_mainData.weeks[weekKey][year] === year) {
-
-      }
-    });
-  });
-
-  console.log(_mainData)
-  return _mainData;
-};
+interface IStateItem {
+  week: string;
+  year: string;
+  status: string;
+  project: string;
+  location: string;
+  description: string;
+  freshService: string;
+  task: string;
+  monday: number;
+  tuesday: number;
+  wednesday: number;
+  thursday: number;
+  friday: number;
+  saturday: number;
+  sunday: number;
+}
 
 const prepareUserData = (param: ISPFilteredObj[]) => {
   // new arr, no mutate
-  let _spArr = [...param];
+  let _sharepointArr = [...param];
   // main, mutate
-  let _mainData = {
-    years: {
-    },
-    weeks: {},
+  let _mainData: IMainData = {
+    yearList: [],
+    years: {},
     items: {}
   };
 
-  _spArr.forEach(dataObj => {
+  _sharepointArr.forEach(dataObj => {
 
     // vars
     let _year = dataObj.Year;
     let _week = dataObj.Week;
+    let _status = dataObj.Status;
 
     // check if necessary properties are created first create if not
     // year not in
-    if (!(_year in _mainData.years)) {
-      _mainData.years = {
+    if (!_mainData.yearList.includes(_year)) {
+      // deep copy
+      // add year property
+      let yearObj = {
+        ..._mainData.years,
         // year is an array of weeks
         [_year] : {
           weeksInYear: [],
-          // week is anarray containing ids of week item
-          [_week]: []
         }
-      }
-    } else {
-      // year can be in and no week in
-      // year in, check if week isn't in
-      if (!(_week in _mainData.years[_year])) {
-        _mainData.years[_year] = {
-          ..._mainData.years[_year],
-          // week is anarray containing ids of week item
-          [_week]: []
-        }
-      }
-    }
-
-    // variable setting
-    let _weeksInYr: string[] = [..._mainData.years[_year]["weekInYears"]];
-    let _arrOfWeekIds: string[] = [..._mainData.years[_year][_week]];
-
-    // mutating
-    if (!_weeksInYr.includes(_week)) {
-      _mainData.years[_year]["weekInYears"] = [
-        ..._weeksInYr,
-        _week
-      ]
-    }
-    // add id of current obj to year, week array
-    _mainData.years[_year][_week] = [
-
-    ]
-
-    // check if year property is not present
-    if (!(_year in _mainData.years)) {
-      // add year property = an array of weeks
-      _mainData.years = {
-        ..._mainData.years,
-        // year is an array of weeks
-        [_year] : [_week]
-      }
-    } else {
-      // weeks in current year
-      let arrWeeksInYear: string[] = [..._mainData.years[_year]];
-      // check if week doesnt exist
-      if (!arrWeeksInYear.includes(_week)){
-        _mainData.years[_year] = [
-          ...arrWeeksInYear,
-          _week
-        ]
-      }
-    }
-
-    // if week property doesnt exist in weeks
-    if (!(_week in _mainData.weeks)) {
-      // create obj
-      _mainData.weeks = {
-        ..._mainData.weeks,
-        // week is array of ids
-        [_week]: [
-          dataObj.Id
-        ] 
-      }
-    } else {
+      };
+      // push in curr year
+      _mainData.yearList.push(_year);
       // mutate
-      _mainData.weeks[_week] = [
-        ..._mainData.weeks[_week],
-        dataObj.Id
-      ]
+      _mainData.years = {
+        ...yearObj
+      };
+
+    }
+    // sure year is in, deal with week.
+    // deep copy
+    let selectedYear = {..._mainData.years[_year]};
+    // if week not in selected year, new week
+    if (!selectedYear.weeksInYear.includes(_week)) {
+      // push  week
+      selectedYear.weeksInYear.push(_week);
+      // add week property
+      selectedYear[_week] = {
+        itemIds: [],
+        status: _status,
+        week: _week,
+        year: _year
+      };
+      // mutate
+      _mainData.years[_year] = selectedYear;
     }
 
-    // items, just add in
+    // sure week is in, additonal data and items
+    // shallow reference
+    let currWeekInYear: {itemIds:number[], status:string} = _mainData.years[_year][_week];
+    // just mutate most
+    // add id
+    currWeekInYear.itemIds.push(dataObj.Id);
+    // add item
     _mainData.items = {
       ..._mainData.items,
       [dataObj.Id]: {
-        week: +dataObj.Week,
-        year: +dataObj.Year,
+        week: dataObj.Week,
+        year: dataObj.Year,
         status: dataObj.Status,
-        Project: dataObj.Projects, 
-        Location: dataObj.Location,
-        Description: dataObj.Description, 
-        FreshService: dataObj.FreshService, 
-        Task:dataObj.Task,
+        project: dataObj.Projects,
+        location: dataObj.Location,
+        description: dataObj.Description,
+        freshService: dataObj.FreshService,
+        task:dataObj.Task,
         monday: dataObj.Monday,
         tuesday: dataObj.Tuesday,
         wednesday: dataObj.Wednesday,
@@ -367,16 +257,98 @@ const prepareUserData = (param: ISPFilteredObj[]) => {
         saturday: dataObj.Saturday,
         sunday: dataObj.Sunday,
       }
-    }
+    };
+
   });
 
-  console.log(_mainData)
+  console.log(_mainData);
   return _mainData;
 };
 
-export { getRandomInt, delay, 
-  weekToDate, valueToSeconds, 
-  objHasProperty, getWeekAndYear, 
+const createStateDataFromSharepoint = (param: ISPFilteredObj[]):IStoreMainData => {
+  // new arr, no mutate
+  let _sharepointArr = [...param];
+  // main, mutate
+  let _mainData: IStoreMainData = {
+    yearList: [],
+    years: {},
+    items: {}
+  };
+  // loop
+  _sharepointArr.forEach(dataObj => {
+    // vars
+    let _year = dataObj.Year;
+    let _week = dataObj.Week;
+    let _status = dataObj.Status;
+
+    // check if necessary properties are created first in main data
+    // year not in
+    if (!_mainData.yearList.includes(_year)) {
+      // year is an array of week objects
+      _mainData.years[_year] = [];
+      // push in curr year to year list
+      _mainData.yearList.push(_year);
+    }
+
+    // sure year is in, deal with week.
+    // current year
+    let currYear = _mainData.years[_year];
+    // if year is empty
+    if (currYear.length === 0) {
+      currYear.push({
+        itemIds: [dataObj.Id],
+        status: _status,
+        week: _week,
+        year: _year
+      });
+    } else {
+      // check if current week is in
+      let currWeek: IStoreYearWeekItem|undefined  = currYear.find((weekData) => {
+        return weekData.week === _week;
+      });
+      // undefined, no week
+      if (typeof currWeek === "undefined") {
+        // new week, push new into year array
+        currYear.push({
+          itemIds: [dataObj.Id],
+          status: _status,
+          week: _week,
+          year: _year
+        });
+      } else {
+        // week exists, update items id
+        currWeek.itemIds.push(dataObj.Id);
+      }
+    }
+
+    // add item to all items list
+    _mainData.items[dataObj.Id] = {
+      id: dataObj.Id,
+      week: dataObj.Week,
+      year: dataObj.Year,
+      status: dataObj.Status,
+      project: dataObj.Projects,
+      location: dataObj.Location,
+      description: dataObj.Description,
+      freshService: dataObj.FreshService,
+      task:dataObj.Task,
+      monday: dataObj.Monday,
+      tuesday: dataObj.Tuesday,
+      wednesday: dataObj.Wednesday,
+      thursday: dataObj.Thursday,
+      friday: dataObj.Friday,
+      saturday: dataObj.Saturday,
+      sunday: dataObj.Sunday,
+    };
+
+    });
+    console.log(_mainData);
+    return _mainData;
+  };
+
+export { getRandomInt, delay,
+  weekToDate, valueToSeconds,
+  objHasProperty, getWeekAndYear,
   compareWeekPeriod, prepareUserData,
-  prepareUserData2, IStateData
+  IStateData, createStateDataFromSharepoint
 };
