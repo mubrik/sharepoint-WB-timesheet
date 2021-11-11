@@ -32,17 +32,17 @@ export default class FluentTestingWebPart extends BaseClientSideWebPart<IFluentT
     ReactDom.render(element, this.domElement);
   }
 
-  public onInit(): Promise<void> {
+  public async onInit (): Promise<void> {
 
     return super.onInit().then(_ => {
-  
+
       // other init code may be present
-  
+
       sp.setup({
         spfxContext: this.context
       });
 
-      console.log("initialiabs")
+      console.log("initialiabs");
     });
   }
 

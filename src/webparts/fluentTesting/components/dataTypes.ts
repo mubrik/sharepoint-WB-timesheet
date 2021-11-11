@@ -11,7 +11,7 @@ export interface IStoreMainData {
     [key: string]: IStoreYearWeekItem[];
   };
   items: {
-    [key: number]: ISharePointItem;
+    [key: number]: ISPJsFullItemsObj;
   };
 }
 
@@ -22,7 +22,7 @@ export interface IStoreYearWeekItem {
     year: string;
 }
 
-export interface ISharePointItem {
+export interface ISPJsFullItemsObj {
   id: number;
   project: string;
   location: string;
@@ -41,45 +41,27 @@ export interface ISharePointItem {
   sunday: number;
 }
 
-export interface IUserWeekData {
-  id: number;
-  project: string;
-  location: string;
-  task: string;
-  description: string;
-  freshService: string;
-  week: string;
-  year: string;
-  monday: number;
-  tuesday: number;
-  wednesday: number;
-  thursday: number;
-  friday: number;
-  saturday: number;
-  sunday: number;
-}
-
-export interface IUserYear {
-  [index: string]: IUserWeeks;
-}
-
-export interface IUserWeeks {
-  [index: string]: IUserWeek;
-}
-
-export interface IUserWeek {
-    week: string;
-    year: string;
-    status: string;
-    data: IUserWeekData[];
-}
-
-export interface IUserWeekDataSet {
-    week: string;
-    year: string;
-    status: string;
-    itemIds: number[];
-}
+// export interface IUserYear {
+//   [index: string]: IUserWeeks;
+// }
+//
+// export interface IUserWeeks {
+//   [index: string]: IUserWeek;
+// }
+//
+// export interface IUserWeek {
+//     week: string;
+//     year: string;
+//     status: string;
+//     data: IUserWeekData[];
+// }
+//
+// export interface IUserWeekDataSet {
+//     week: string;
+//     year: string;
+//     status: string;
+//     itemIds: number[];
+// }
 
 // data
 const times = {

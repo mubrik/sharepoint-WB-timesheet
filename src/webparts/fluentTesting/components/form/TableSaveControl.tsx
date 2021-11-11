@@ -3,7 +3,7 @@ import * as React from "react";
 import { DateContext, RequestContext } from "../FluentTesting";
 import {Validation} from "./TablePage";
 import { IAction, StoreData } from "../FluentTesting";
-import { IServer } from "../../controller/server";
+import { IServer, IServerReqObject } from "../../controller/serverTypes";
 // UI
 import {
   Stack,
@@ -13,11 +13,10 @@ import {
   Text,
 } from "office-ui-fabric-react";
 // sampleData and types
-import { IUserWeek, IUserWeekData } from "../dataTypes";
+import {ISPJsFullItemsObj } from "../dataTypes";
 // utils
 import {
   getWeekAndYear,
-  getRandomInt,
   delay
 } from "../utils/utils";
 import NotificationBar from "../utils/NotificationBar";
@@ -59,16 +58,15 @@ const TableSaveControl: React.FunctionComponent<ITableSave> = (
     /* let _week = Number(week.key);
     let _year = Number(year.text); */
     let [_week, _year] = getWeekAndYear(dateValue);
-    let _weekData: IUserWeekData[] = [];
+    let _weekData: ISPJsFullItemsObj[] = [];
 
     // use grid api
     props.api.forEachNode((rowNode, _) => {
       // not decided if to remove empty node or to fill blank data, blank data for now
       _weekData.push({
-        id: getRandomInt(8),
-        Project: "",
-        Location: "",
-        Task: "",
+        project: "",
+        location: "",
+        task: "",
         monday: 0,
         tuesday: 0,
         wednesday: 0,
@@ -81,12 +79,14 @@ const TableSaveControl: React.FunctionComponent<ITableSave> = (
     });
 
     // data
-    let _postData: IUserWeek = {
+    let _postData: IServerReqObject = {
       week: _week,
       year: _year,
       data: _weekData,
       status: "draft",
     };
+
+    console.log(_postData);
 
     // emulating a post request to a server  that returns successful instance
     let response = delay(3000, _postData);

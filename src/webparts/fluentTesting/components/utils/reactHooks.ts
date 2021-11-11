@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { eachDayOfInterval, startOfWeek, endOfWeek } from 'date-fns';
 import { StoreData } from "../FluentTesting";
-import {IUserWeekData, IStoreState} from "../dataTypes";
+import {ISPJsFullItemsObj, IStoreState} from "../dataTypes";
 
 
 const useGetDatesHook = (dateObj: Date | null): Date[] | null => {
@@ -24,12 +24,12 @@ const useGetDatesHook = (dateObj: Date | null): Date[] | null => {
 
 };
 
-const useGetTableDataFromStore = (param: number[]): IUserWeekData[] | [] => {
+const useGetTableDataFromStore = (param: number[]): ISPJsFullItemsObj[] | [] => {
 
   // react context
   const { data: storeData }: { data: IStoreState } = React.useContext(StoreData);
   // var
-  let arrToReturn: IUserWeekData[]  = [];
+  let arrToReturn: ISPJsFullItemsObj[]  = [];
   console.log(param);
 
   if (param === undefined || param.length === 0) {

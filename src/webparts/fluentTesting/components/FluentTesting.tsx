@@ -9,9 +9,9 @@ import { NavBar } from "./nav/Navbar";
 import DraftPage from './draft/DraftPage';
 import TablePage from "./form/TablePage";
 // sample data and types
-import { IUserWeek, IStoreState} from "./dataTypes";
+import { IStoreState} from "./dataTypes";
 import { WebPartContext } from "@microsoft/sp-webpart-base";
-import {IServer} from '../controller/server';
+import {IServer} from '../controller/serverTypes';
 // test
 import {prepareUserData, createStateDataFromSharepoint} from "./utils/utils";
 
@@ -33,7 +33,7 @@ const initialData:IStoreState = {
 export type IAction =
   | { type: "updateAll", payload: IStoreState }
   | { type: "updateLoading", payload: { status: string } }
-  | { type: "updateWeek", payload: { data: IUserWeek } };
+  | { type: "updateWeek", payload: { data: {} } };
 
 // reducer, leaving this here for readability, should move when bigger
 const myReducer = (state: IStoreState, action: IAction): IStoreState => {
@@ -52,16 +52,17 @@ const myReducer = (state: IStoreState, action: IAction): IStoreState => {
 
     case "updateWeek":
       console.log(action);
-      let _weekToUpdate = String(action.payload.data.week);
-      let _yearToUpdate = String(action.payload.data.year);
-
-      return {
-        ...state,
-        data: {
-          ...state.data,
-          [_yearToUpdate]: { ...state.data[_yearToUpdate], [_weekToUpdate]: action.payload.data }
-        }
-      };
+      break;
+      // // let _weekToUpdate = String(action.payload.data.week);
+      // // let _yearToUpdate = String(action.payload.data.year);
+      // //
+      // // return {
+      // //   ...state,
+      // //   data: {
+      // //     ...state.data,
+      // //     [_yearToUpdate]: { ...state.data[_yearToUpdate], [_weekToUpdate]: action.payload.data }
+      // //   }
+      // };
     default:
       break;
   }

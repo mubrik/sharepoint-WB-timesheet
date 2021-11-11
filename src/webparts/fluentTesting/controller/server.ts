@@ -1,6 +1,8 @@
 import { sp } from "@pnp/sp/presets/core";
 import { WebPartContext } from "@microsoft/sp-webpart-base";
-import { IUserWeek } from "../components/dataTypes";
+// types
+import {IServer, IServerReqObject} from "./serverTypes";
+import { ISPJsFullItemsObj} from "../components/dataTypes";
 
 const LIST_COLUMNS = [
   "User", "Week", "Status", "Projects", "Description",
@@ -10,33 +12,33 @@ const LIST_COLUMNS = [
 ];
 
 /* interface */
-export interface IServer {
-  fetch: typeof sp;
-  context: WebPartContext|null;
-  getList: () => Promise<any[]>;
-  getUserList: () => Promise<any[]| ISPFilteredObj[]>;
-  createDraft: (param: IUserWeek) => Promise<void>;
-}
-/* user data object received after filter*/
-export interface ISPFilteredObj {
-  Id: number;
-  User: string;
-  Projects: string;
-  Description: string;
-  FreshService: string;
-  Location: string;
-  Status: string;
-  Task: string;
-  Year: string;
-  Week: string;
-  Monday: number;
-  Tuesday: number;
-  Wednesday: number;
-  Thursday: number;
-  Friday: number;
-  Saturday: number;
-  Sunday: number;
-}
+// export interface IServer {
+//   fetch: typeof sp;
+//   context: WebPartContext|null;
+//   getList: () => Promise<any[]>;
+//   getUserList: () => Promise<any[]| ISPFilteredObj[]>;
+//   createDraft: (param: IUserWeek) => Promise<void>;
+// }
+// /* user data object received after filter*/
+// export interface ISPFilteredObj {
+//   Id: number;
+//   User: string;
+//   Projects: string;
+//   Description: string;
+//   FreshService: string;
+//   Location: string;
+//   Status: string;
+//   Task: string;
+//   Year: string;
+//   Week: string;
+//   Monday: number;
+//   Tuesday: number;
+//   Wednesday: number;
+//   Thursday: number;
+//   Friday: number;
+//   Saturday: number;
+//   Sunday: number;
+// }
 
 /* handler for CRUD REST requests */
 class Server implements IServer {
@@ -64,7 +66,7 @@ class Server implements IServer {
     return this.fetch.web.lists.getByTitle("B4").items.select(...LIST_COLUMNS).filter("User eq '" + this.context.pageContext.user.loginName + "'").get();
   }
 
-  public createDraft = async (param: IUserWeek) => {
+  public createDraft = async (param: IServerReqObject) => {
     // slice
     let _draft = {...param};
     // get list
@@ -101,7 +103,7 @@ class Server implements IServer {
     console.log("Done");
   }
 
-  public updateDraft = async (param: IUserWeek, id: number) => {
+  public updateDraft = async (param: IServerReqObject, id: number) => {
     // slice
     let _draft = {...param};
     // get list

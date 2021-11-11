@@ -1,6 +1,6 @@
 import { getWeek, getYear } from 'date-fns';
-import { IUserWeek, IUserWeekDataSet, IStoreMainData, IStoreYearWeekItem } from '../dataTypes';
-import { ISPFilteredObj } from '../../controller/server';
+import { IStoreMainData, IStoreYearWeekItem } from '../dataTypes';
+import { ISPFullItemsObj, IServerReqObject } from '../../controller/serverTypes';
 
 export const stylesDanger = {
   root: [
@@ -33,7 +33,7 @@ function getRandomInt(max: number): number {
   return Math.floor(Math.random() * max);
 }
 // delay function, returns promise
-function delay(t: number, v: IUserWeek): Promise<IUserWeek> {
+function delay(t: number, v: IServerReqObject): Promise<IServerReqObject> {
   return new Promise((resolve) => {
     setTimeout(resolve.bind(null, v), t);
   });
@@ -126,7 +126,7 @@ const getWeekAndYear = (param: Date): [string, string] => {
   return [_week.toString(), _year.toString()];
 };
 /* compare for sort */
-const compareWeekPeriod = (_weekA: IUserWeekDataSet, _weekB: IUserWeekDataSet) => {
+const compareWeekPeriod = (_weekA: IStoreYearWeekItem, _weekB: IStoreYearWeekItem) => {
   return +_weekA.week - +_weekB.week;
 };
 
@@ -176,7 +176,7 @@ interface IStateItem {
   sunday: number;
 }
 
-const prepareUserData = (param: ISPFilteredObj[]) => {
+const prepareUserData = (param: ISPFullItemsObj[]) => {
   // new arr, no mutate
   let _sharepointArr = [...param];
   // main, mutate
@@ -265,7 +265,7 @@ const prepareUserData = (param: ISPFilteredObj[]) => {
   return _mainData;
 };
 
-const createStateDataFromSharepoint = (param: ISPFilteredObj[]):IStoreMainData => {
+const createStateDataFromSharepoint = (param: ISPFullItemsObj[]):IStoreMainData => {
   // new arr, no mutate
   let _sharepointArr = [...param];
   // main, mutate

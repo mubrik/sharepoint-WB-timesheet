@@ -5,7 +5,7 @@ import {
   GridApi,
   ColumnApi,
 } from "@ag-grid-community/all-modules";
-import { IUserWeek } from "../dataTypes";
+import { IStoreYearWeekItem } from "../dataTypes";
 
 /* interface for table form validation data */
 export interface IFormValid  {
@@ -16,7 +16,7 @@ export interface IFormValid  {
 /* interface for table draft data */
 export interface IDraft {
   state: boolean;
-  draft: IUserWeek | {};
+  draft: IStoreYearWeekItem | {};
 }
 /* base interface for components imported by table  */
 

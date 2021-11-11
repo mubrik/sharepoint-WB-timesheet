@@ -6,7 +6,7 @@ import {
   PrimaryButton,
   DefaultButton,
 } from "office-ui-fabric-react";
-import { IUserWeekDataSet } from "../dataTypes";
+import { IStoreYearWeekItem } from "../dataTypes";
 // react context
 import {
   DateContext,
@@ -23,7 +23,7 @@ const dialogContentProps = {
 
 interface IDialogProps {
   hidden: boolean;
-  weekData: IUserWeekDataSet;
+  weekData: IStoreYearWeekItem;
   setPageState: (value: React.SetStateAction<string>) => void;
   setDraftDialog: React.Dispatch<React.SetStateAction<any>>;
 }

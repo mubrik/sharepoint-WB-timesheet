@@ -50,6 +50,7 @@ const TableMainForm: React.FunctionComponent<ITableMainForm> = (
   const selectedDates = useGetDatesHook(dateValue ? dateValue : null);
   // testing
   let mainTable = useGetTableDataFromStore(tableData);
+  console.log(mainTable);
   // format date column labels
   const formatLabel = (day: string, index: number): string => {
     // if date is null for some reason
