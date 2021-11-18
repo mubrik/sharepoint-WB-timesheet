@@ -5,28 +5,37 @@ import {
   GridApi,
   ColumnApi,
 } from "@ag-grid-community/all-modules";
-import { IStoreYearWeekItem } from "../dataTypes";
+// ui
+import { IDropdownOption } from "office-ui-fabric-react";
+import { ISpUserTaskData, ISpUserPeriodData } from "../../controller/serverTypes";
+
+export type ITablePageState = "idle" | "loaded" | "loading";
+export type ITableFormMode = "new" | "edit";
 
 /* interface for table form validation data */
 export interface IFormValid  {
   formState: false;
   msg: string;
-  tableState: { state: false, msg: string };
+  tableState: { state: false; msg: string };
 }
 /* interface for table draft data */
 export interface IDraft {
   state: boolean;
-  draft: IStoreYearWeekItem | {};
+  draft: ISpUserPeriodData;
 }
 /* base interface for components imported by table  */
 
-interface IBaseTableProps {
-  formMode: string;
+export interface IBaseTableProps {
+  formMode: ITableFormMode;
   api: GridApi | null;
 }
 
 export interface ITableDate extends IBaseTableProps {
   totalHoursInSec: number;
+  selectedYear: IDropdownOption;
+  selectedWeek: IDropdownOption;
+  setSelectedYear: React.Dispatch<React.SetStateAction<IDropdownOption>>;
+  setSelectedWeek: React.Dispatch<React.SetStateAction<IDropdownOption>>;
 }
 
 export interface ITableDraft extends IBaseTableProps {
@@ -36,12 +45,16 @@ export interface ITableDraft extends IBaseTableProps {
 }
 
 export interface ITableMainForm extends IBaseTableProps {
+  formData: ISpUserTaskData[];
   totalHoursInSec?: number;
   onGridReady?: (event: GridReadyEvent) => void;
 }
 
 export interface ITableSave extends IBaseTableProps {
-
+  formData: ISpUserTaskData[];
+  selectedYear: IDropdownOption;
+  selectedWeek: IDropdownOption;
+  setTablePageState: React.Dispatch<React.SetStateAction<ITablePageState>>;
 }
 
 export interface ITableInput extends IBaseTableProps {
@@ -53,7 +66,7 @@ export interface ITableInput extends IBaseTableProps {
 }
 
 export interface ITableControlProps {
-  formMode: string;
+  formMode: ITableFormMode;
   api: GridApi | null;
   column?: ColumnApi | null;
   rowSelected?: number[];
@@ -66,7 +79,7 @@ export interface ITableControlProps {
 }
 
 export interface ITableDraftControlProps {
-  hasDraft: IDraft;
+  hasDraft?: IDraft;
   api: GridApi | null;
   formMode: string;
   setFormMode: React.Dispatch<React.SetStateAction<string>>;

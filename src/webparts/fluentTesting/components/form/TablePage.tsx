@@ -1,70 +1,47 @@
 import * as React from "react";
 // context data
-import { DateContext, TableDataContext, RequestContext } from "../FluentTesting";
-import { StoreData } from "../FluentTesting";
-import {IStoreYearWeekItem} from "../dataTypes";
-import { IServer } from "../../controller/serverTypes";
+import { TableDataContext } from "../FluentTesting";
 // UI
 import {
   PrimaryButton,
-  Stack,
+  Stack, Spinner,
   StackItem,
-  Label,
-  ProgressIndicator,
-  MessageBarType,
-  DatePicker,
-  Text,
-  DayOfWeek,
-  FirstWeekOfYear,
+  IDropdownOption
 } from "office-ui-fabric-react";
+// server
+import fetchServer from "../../controller/server";
+import {ISpUserTaskData} from "../../controller/serverTypes";
+// utils
 import { stylesDanger } from "../utils/utils";
 // grid imports
 import {
   GridReadyEvent,
   GridApi,
   ColumnApi,
-  AllCommunityModules,
   RowSelectedEvent,
   CellValueChangedEvent,
   VirtualRowRemovedEvent,
   ComponentStateChangedEvent,
   RowDataChangedEvent
 } from "@ag-grid-community/all-modules";
-import { AgGridReact, AgGridColumn } from "@ag-grid-community/react";
-import { useMediaQuery } from "react-responsive";
-import "@ag-grid-community/client-side-row-model";
-import "ag-grid-community/dist/styles/ag-grid.css";
-import "ag-grid-community/dist/styles/ag-theme-alpine.css";
-import "ag-grid-community/dist/styles/ag-theme-balham.css";
-// option tables
-import { projectOptions, taskOptions, locationOptions } from "./optionSelect";
-// sampleData and types
-import {  IStoreState } from "../dataTypes";
-// time column editor
-import TimeEditor, { timeValueFormatter } from "./customCellEditor";
-// hooks
-import { useGetDatesHook, useGetTableDataFromStore } from "../utils/reactHooks";
 // utils
 import {
   valueToSeconds,
   objHasProperty,
   getWeekAndYear,
-  getRandomInt,
-  delay,
-  weekToDate,
 } from "../utils/utils";
-import { secondsToHours } from "date-fns";
-import NotificationBar from "../utils/NotificationBar";
-import ResponsivePrimaryButton from "../utils/ResponsiveButton";
-import * as XLSX from "xlsx";
 // custom components
 import TableMainForm from "./TableMainForm";
 import TableDateControl from "./TableDateControl";
 import TableDraftControl from "./TableDraftControl";
 import TableInputControl from "./TableInputControl";
+import TableSaveControl from "./TableSaveControl";
+import TableDatePeriodLabel from "./TableDatePeriodLabel";
+// types
+import {ITablePageState, ITableFormMode} from "./tableTypes";
 
 export interface IProps {
-  mode: string;
+  mode: ITableFormMode;
   setDraftPage?: React.Dispatch<React.SetStateAction<string>>;
 }
 
@@ -76,29 +53,24 @@ const initialValidState = {
   msg: "",
   tableState: { state: false, msg: "" },
 };
-const initialDraftState: { state: boolean; draft: IStoreYearWeekItem | {} } = {
+const initialDraftState: { state: boolean; draft: ISpUserTaskData | {} } = {
   state: false,
   draft: {},
 };
 
 const TablePage: React.FunctionComponent<IProps> = (props: IProps) => {
   // props to be used
-  let _mode = props.mode;
+  const _mode = props.mode;
   // date, tabledata and storedata context
   const {
     tableData,
     setTableData,
-  }: {
-    tableData: number[] | [];
-    setTableData: React.Dispatch<React.SetStateAction<number[] | []>>;
   } = React.useContext(TableDataContext);
-  const { data: storeData }: { data: IStoreState } = React.useContext(StoreData);
-  const { date: dateValue }: { date: Date } = React.useContext(DateContext);
   // states
-  const [formMode, setFormMode] = React.useState<string>(_mode || "new");
-  const [totalHoursInSec, setTotalHoursInSec] = React.useState<number | null>(
-    0
-  );
+  const [formMode, setFormMode] = React.useState<ITableFormMode>(_mode || "new");
+  const [tablePageState, setTablePageState] = React.useState<ITablePageState>("idle");
+  const [formData, setFormData] = React.useState<ISpUserTaskData[]>([]);
+  const [totalHoursInSec, setTotalHoursInSec] = React.useState<number | null>(0);
   const [hasDraft, setHasDraft] = React.useState(initialDraftState);
   // validation state, memo validation value to ease rerender
   const [validState, setValidState] = React.useState(initialValidState);
@@ -108,39 +80,60 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps) => {
   );
   // exposing grid and column api
   const [gridApi, setGridApi] = React.useState<null | GridApi>(null);
-  const [gridColumnApi, setGridColumnApi] = React.useState<null | ColumnApi>(
-    null
-  );
+  const [gridColumnApi, setGridColumnApi] = React.useState<null | ColumnApi>(null);
+  // selected year and week
+  const [selectedYear, setSelectedYear] = React.useState<IDropdownOption>(null);
+  const [selectedWeek, setSelectedWeek] = React.useState<IDropdownOption>(null);
   // track row selection
   const [rowSelected, setRowSelected] = React.useState<number[]>([]);
 
   // effect to set mode
   React.useEffect(() => {
-    if (_mode === "new") {
-      // do something
-      setTableData([]);
-    } else if (_mode === "edit") {
-      // do something else
-      setFormMode("edit");
+    setFormMode(_mode);
+  }, []);
+
+  // effect to fetch table data 
+  React.useEffect(() => {
+
+    const _tableData = [];
+    // if idle
+    if (formMode === "edit" && tablePageState === "idle") {
+      console.log("loading table data");
+      // memory leak if "virtualrowremoved" event triggers and reference to old gridapi
+      setGridApi(null);
+      // set loading
+      setTablePageState("loading");
+      // load data
+      fetchServer.getUserTaskByReference(tableData.referenceId)
+        .then(result => {
+          console.log("table data loaded");
+          setFormData(result);
+          setTablePageState("loaded");
+        })
+        .catch(error => console.log(error));
+    } else if (formMode === "new" && tablePageState === "idle") {
+      setFormData([]);
+      setTablePageState("loaded");
     }
-  }, [_mode]);
+
+  }, [formMode, tablePageState]);
 
   // if page is edit, calculate time. checking grid api to only run after table loads
   React.useEffect(() => {
     if (gridApi && formMode === "edit") {
-      calculateTotalTime();
+      calculateTotalTime(gridApi);
     }
   }, [gridApi, formMode]);
 
   // validation effect
   React.useEffect(() => {
-    // check date is set
-    if (dateValue === null) {
+    // check date is set only if formpage === new
+    if (formMode === "new" && selectedWeek === null) {
       setValidState((oldState) => {
         return {
           ...oldState,
           formState: false,
-          msg: "Select a Date",
+          msg: "Select a Time Period",
         };
       });
 
@@ -181,40 +174,40 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps) => {
         msg: "",
       };
     });
-  }, [dateValue, totalHoursInSec, validState.tableState]);
+  }, [selectedWeek, totalHoursInSec, validState.tableState]);
 
   // draft checker effect
   React.useEffect(() => {
     // checks if selected period has an available draft
-    if (dateValue === null) return;
-    // get week and year
-    let [_week, _year] = getWeekAndYear(dateValue);
-    console.log(_week, _year);
-    // store has year
-    if (storeData.status === "loaded") {
-      if (storeData.data.yearList.includes(_year)) {
-        // find if week exists
-        let _draftItem = storeData.data.years[_year].find((weekData) => {
-          return weekData.week === _week;
-        });
-        // doesnt exist
-        if (typeof _draftItem === "undefined") {
-          return;
-        }
-        // exist
-        setHasDraft({
-          state: true,
-          draft: _draftItem,
-        });
-      }
-    }
+    // if (selectedWeek === null) return;
+    // // get week and year
+    // let [_week, _year] = getWeekAndYear(dateValue);
+    // console.log(_week, _year);
+    // // store has year
+    // if (storeData.status === "loaded") {
+    //   if (storeData.data.yearList.includes(_year)) {
+    //     // find if week exists
+    //     let _draftItem = storeData.data.years[_year].find((weekData) => {
+    //       return weekData.week === _week;
+    //     });
+    //     // doesnt exist
+    //     if (typeof _draftItem === "undefined") {
+    //       return;
+    //     }
+    //     // exist
+    //     setHasDraft({
+    //       state: true,
+    //       draft: _draftItem,
+    //     });
+    //   }
+    // }
     /* if (_year in storeData.data && _week in storeData.data[_year]) {
       setHasDraft({
         state: false,
         draft: storeData[_year][_week]
       });
     } */
-  }, [dateValue]);
+  }, [selectedWeek]);
 
   // just a list of stuff
   const weekDays = [
@@ -229,13 +222,13 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps) => {
   const arrToValidate = ["project", "task"];
 
   // exposes grid api on grid ready event
-  const handleGridReady = (event: GridReadyEvent) => {
+  const handleGridReady = (event: GridReadyEvent): void => {
     console.log("grid ready");
     setGridApi(event.api);
     setGridColumnApi(event.columnApi);
     // validation
     // if not edit data disable until row added
-    if (tableData.length === 0) {
+    if (formMode === "new") {
       setValidState((oldState) => {
         return {
           ...oldState,
@@ -250,13 +243,13 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps) => {
         };
       });
     }
-    // testing event listeners
+    // event listeners
     // use values from event/state dispatch as event listenrs handler function doesnt have access to current state values
     // when cell value changes
     event.api.addEventListener(
       "cellValueChanged",
       (_event: CellValueChangedEvent) => {
-        let eventColumn = _event.colDef.field;
+        const eventColumn = _event.colDef.field;
         // column a in week
         if (weekDays.includes(eventColumn)) {
           // calculate total time
@@ -281,7 +274,7 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps) => {
     event.api.addEventListener("rowSelected", (_event: RowSelectedEvent) => {
       // check if row is actually selected, event triggers for previousselect when switching select
       // get index
-      let row = _event.rowIndex;
+      const row = _event.rowIndex;
       // if row === null, row has been removed by table input control and set row already called
       if (row === null) {
         return;
@@ -289,35 +282,34 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps) => {
       // if ro in array, remove it, else add it
       setRowSelected((oldRows) => {
         if (oldRows.includes(row)) {
-          let newArr = oldRows.filter((value) => value !== row);
+          const newArr = oldRows.filter((value) => value !== row);
           return newArr;
         } else {
           return [...oldRows, row];
         }
       });
     });
-    event.api.addEventListener("componentStateChanged", (_event:ComponentStateChangedEvent) =>
-      console.log(_event)
-    );
+    event.api.addEventListener("componentStateChanged", (_event: ComponentStateChangedEvent) => {
+      // do something
+    });
     event.api.addEventListener("dataChanged", (_event: RowDataChangedEvent) => console.log(_event));
   };
   // utils
   // calculate  total time in time cells
-  const calculateTotalTime = (api: GridApi = gridApi) => {
-    // grid api
-    let _gridApi = api ? api : gridApi;
+  const calculateTotalTime = (api: GridApi): boolean => {
+ 
     // if grid api valid
-    if (_gridApi === null) return false;
+    if (api === null) return false;
     // total
     let totalTimeInSec = 0;
 
-    _gridApi.forEachNode((rowNode, _) => {
+    api.forEachNode((rowNode, _) => {
       // get row data
-      let rowdata = { ...rowNode.data };
+      const rowdata = { ...rowNode.data };
       // loop over every column, if a weekday column, calculate time in secs and add it
       Object.keys(rowdata).forEach((colName) => {
         if (weekDays.includes(colName)) {
-          let timeInSec = valueToSeconds(rowdata[colName]);
+          const timeInSec = valueToSeconds(rowdata[colName]);
           totalTimeInSec += timeInSec;
         }
       });
@@ -326,17 +318,15 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps) => {
     setTotalHoursInSec(totalTimeInSec);
   };
   // validate data in table
-  const validateDataEntries = (api: GridApi = gridApi): boolean => {
+  const validateDataEntries = (api: GridApi): boolean => {
 
     console.log("validating");
-    // grid api
-    let _gridApi = api ? api : gridApi;
     // if grid api valid
-    if (_gridApi === null) return false;
+    if (api === null) return false;
     // iteration control
     let isValid = true;
     // row number
-    let rowsNumber = _gridApi.getDisplayedRowCount();
+    const rowsNumber = api.getDisplayedRowCount();
 
     if (rowsNumber === 0) {
       setValidState((oldState) => {
@@ -349,15 +339,15 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps) => {
       return;
     }
 
-    _gridApi.forEachNode((rowNode, index) => {
+    api.forEachNode((rowNode, index) => {
       // if validation already hit an invalid entry, return
       if (!isValid) return;
       // get row data
-      let rowdata = { ...rowNode.data };
+      const rowdata = { ...rowNode.data };
       // row id
-      let rowId = index;
+      const rowId = index;
       // check row data for missing fields
-      let [valid, response] = objHasProperty(arrToValidate, rowdata);
+      const [valid, response] = objHasProperty(arrToValidate, rowdata);
 
       if (!valid) {
         // a column is missing a value
@@ -400,30 +390,56 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps) => {
         <TableDateControl
           formMode={formMode}
           api={gridApi}
+          selectedYear={selectedYear}
+          selectedWeek={selectedWeek}
+          setSelectedWeek={setSelectedWeek}
+          setSelectedYear={setSelectedYear}
           totalHoursInSec={totalHoursInSec}
         />
         <TableDraftControl
-          hasDraft={hasDraft}
+          // hasDraft={hasDraft}
           api={gridApi}
           formMode={formMode}
           setFormMode={setFormMode}
           validateDataEntries={validateDataEntries}
         />
-        <TableMainForm
-          formMode={formMode}
-          api={gridApi}
-          onGridReady={handleGridReady}
-          totalHoursInSec={totalHoursInSec}
-        />
-        <TableInputControl
-          formMode={formMode}
-          api={gridApi}
-          column={gridColumnApi}
-          rowSelected={rowSelected}
-          setRowSelected={setRowSelected}
-          validateDataEntries={validateDataEntries}
-          calculateTotalTime={calculateTotalTime}
-        />
+
+        {
+          tablePageState === "loading" ?
+          <>
+            <Spinner label={"Loading table data"} ariaLive="assertive" labelPosition="top"></Spinner>
+          </> :
+          <>
+            <TableSaveControl 
+              formMode={formMode} 
+              api={gridApi} 
+              formData={formData}
+              selectedYear={selectedYear}
+              selectedWeek={selectedWeek}
+              setTablePageState={setTablePageState}
+            />
+            <TableDatePeriodLabel
+              api={gridApi}
+              formMode={formMode}
+            />
+            <TableMainForm
+              formMode={formMode}
+              formData={formData}
+              api={gridApi}
+              onGridReady={handleGridReady}
+              totalHoursInSec={totalHoursInSec}
+            />
+            <TableInputControl
+              formMode={formMode}
+              api={gridApi}
+              column={gridColumnApi}
+              rowSelected={rowSelected}
+              setRowSelected={setRowSelected}
+              validateDataEntries={validateDataEntries}
+              calculateTotalTime={calculateTotalTime}
+            />
+          </>
+        }
       </Stack>
     </Validation.Provider>
   );
@@ -442,32 +458,16 @@ interface ITableControlProps {
   onGridReady?: (event: GridReadyEvent) => void;
 }
 
-interface ITableDraftControlProps {
-  hasDraft: typeof initialDraftState;
-  api: GridApi | null;
-  formMode: string;
-  setFormMode: React.Dispatch<React.SetStateAction<string>>;
-  validateDataEntries?: (api?: GridApi) => boolean;
-}
-
-
 const TableBackControl: React.FunctionComponent<ITableControlProps> = (
   props: ITableControlProps
 ) => {
-  // context
-  const {
-    setDate,
-  }: { setDate: React.Dispatch<React.SetStateAction<null | Date>> } =
-    React.useContext(DateContext);
   // return button only if edit mode and a prop to set draft page is set
-  let formMode = props.formMode;
-  let setDraftPageState = props.setDraftPageState;
+  const formMode = props.formMode;
+  const setDraftPageState = props.setDraftPageState;
 
   // handlers
-  const handleBackClicked = () => {
+  const handleBackClicked = (): void => {
     setDraftPageState("list");
-    // null date
-    setDate(null);
   };
 
   return (

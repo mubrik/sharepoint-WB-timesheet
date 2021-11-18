@@ -1,6 +1,4 @@
 import * as React from 'react';
-// react context
-import { StoreData } from "../FluentTesting";
 // UI
 import {
   FocusZone,
@@ -8,16 +6,23 @@ import {
   List, mergeStyleSets,
   StackItem, Stack,
   Dropdown, IDropdownOption,
-  Spinner,
-  IPageProps
+  Spinner, DefaultButton,
+  IPageProps, ContextualMenu,
+  IContextualMenuProps
 } from 'office-ui-fabric-react';
+// server
+import fetchServer from '../../controller/server';
+import {ISpUserPeriodData} from '../../controller/serverTypes';
+// user data
+import {useGetUserData} from "../hooks";
 // components
 import TablePage from '../form/TablePage';
 import DraftDialog from "./DraftDialog";
 // sample data types
 import {IDraftProps, IDraftState} from "./draftTypes";
-import {IStoreState, IStoreYearWeekItem } from '../dataTypes';
 import {compareWeekPeriod} from "../utils/utils";
+// notification
+import useNotificationHook from '../notification/hook';
 
 // styles
 const gridCLasses = mergeStyleSets({
@@ -49,35 +54,30 @@ const initialState: IDraftState = {
 
 const DraftPage: React.FunctionComponent<IDraftProps> = () => {
 
-  // react context
-  const { data: storeData }: { data: IStoreState } = React.useContext(StoreData);
+  // list data, data list should be async set in production
+  const [draftState, setDraftState] = React.useState<IDraftState>(initialState);
+  // user data
+  const userData = useGetUserData();
   // controlled input states
   const [yearFilter, setYearFilter] = React.useState<IDropdownOption>({ key: "full", text: "All" },);
   const [statusFilter, setStatusFilter] = React.useState<IDropdownOption>({ key: "full", text: "All" });
-  const [sort, setSort] = React.useState<IDropdownOption>({ key: "up", text: "Ascending" });
   const [weekFilter, setweekFilter] = React.useState("");
+  const [sort, setSort] = React.useState<IDropdownOption>({ key: "up", text: "Ascending" });
   // page view state
   const [pageState, setPageState] = React.useState<string>("list");
-  // list data, data list should be async set in production
-  const [draftData, setDraftData] = React.useState<IDraftState>(initialState);
-  const [shownItems, setShownItems] = React.useState<null | IStoreYearWeekItem[]>(null);
+  const [shownItems, setShownItems] = React.useState<null | ISpUserPeriodData[]>(null);
   // modal dialog state and data
   const [draftDialog, setDraftDialog] = React.useState({ hidden: true, data: null });
   // year options
-  const [yearOptions, setYearOptions] = React.useState([{ key: "full", text: "All" }]);
-
-  // year keys
-  // let controlledYear = [
-  //   // { key: "2020", text: "2020" },
-  //   // { key: "2021", text: "2021" },
-  //   { key: "full", text: "All" },
-  // ];
+  const [yearOptions, setYearOptions] = React.useState<IDropdownOption[]>([{ key: "full", text: "All" }]);
+  // notification
+  const notify = useNotificationHook();
 
   // status filter keys
   const controlledStatus = [
-    { key: "draft", text: "Draft" },
-    { key: "pending", text: "Pending" },
-    { key: "approved", text: "Approved" },
+    { key: "Draft", text: "Draft" },
+    { key: "Pending", text: "Pending" },
+    { key: "Approved", text: "Approved" },
     { key: "full", text: "All" },
   ];
 
@@ -87,49 +87,45 @@ const DraftPage: React.FunctionComponent<IDraftProps> = () => {
     { key: "down", text: "Decending" },
   ];
 
-  // online effect
+  // effect for fetching data
   React.useEffect(() => {
-    // sample
-    // create case for empty obj later
-    console.log(storeData.data);
-    let data = {...storeData.data};
 
-    let _draftData: IDraftState = {
-      full: []
-    };
-    // years arr
-    let _yearsList = data.yearList;
-    // iterate
-    _yearsList.forEach(year => {
-      // create year
-      _draftData[year] = [...data.years[year]];
-      // add items to full list
-      _draftData.full = [
-        ..._draftData.full,
-        ...data.years[year],
-      ];
-      // controlled year
-      setYearOptions((prev) => {
-        return [
-          ...prev,
-          { key: year, text: year }
-        ];
-      });
-    });
-
-    // set data
-    setDraftData((oldData) => {
-      return {
-        ...oldData,
-        ..._draftData,
+    if (userData) {
+      // initial object state
+      const _draftData: IDraftState = {
+        full: []
       };
-    });
+      // fetch 
+      fetchServer.getUserPeriodList(userData.email)
+      .then(result => {
+        // loop over periods
+        result.forEach((timePeriod) => {
+          // if time period doesnt exist in initial obj state create it
+          if (!(timePeriod.year in _draftData)) {
+            _draftData[timePeriod.year] = [];
 
-    // set shown arr
-    setShownItems(_draftData.full);
+            // aslo add year to options for sorting
+            setYearOptions(prevValue => ([
+              ...prevValue,
+              {key: `${timePeriod.year}`, text: `${timePeriod.year}`}
+            ]));
+          }
+          // add period
+          _draftData[timePeriod.year].push(timePeriod);
+          // full
+          _draftData.full.push(timePeriod);
+        });
 
-    console.log("statedate", _draftData);
-  },[storeData]);
+        // set show
+        setShownItems(result);
+        // set state
+        setDraftState(prevValue => ({
+          ...prevValue,
+          ..._draftData
+        }));
+      });
+    }
+  },[userData]);
 
   // use effect for handling filter states change
   React.useEffect(() => {
@@ -138,21 +134,21 @@ const DraftPage: React.FunctionComponent<IDraftProps> = () => {
     const _sort = sort.key;
 
     // array year filtered
-    let arrayToSet: Array<IStoreYearWeekItem> = [...draftData[_year]];
+    const arrayToSet: Array<ISpUserPeriodData> = [...draftState[_year]];
 
     // check if data empty
     if (arrayToSet.length === 0) {
       setShownItems(null);
     } else {
       // filter by weeek
-      let _filteredWeek = (weekFilter && weekFilter !== "0") ?
+      const _filteredWeek = (weekFilter && weekFilter !== "0") ?
         arrayToSet.filter(weekItem => {
           return weekItem.week.toString().toLowerCase().indexOf(weekFilter.toLowerCase()) >= 0;
         }) :
         arrayToSet;
 
       // sort array
-      let _sortedWeek = (_sort === "up") ? _filteredWeek.sort(compareWeekPeriod) :
+      const _sortedWeek = (_sort === "up") ? _filteredWeek.sort(compareWeekPeriod) :
         _filteredWeek.sort(compareWeekPeriod).reverse();
 
       // filter by status
@@ -161,26 +157,34 @@ const DraftPage: React.FunctionComponent<IDraftProps> = () => {
         setShownItems(_sortedWeek);
       } else {
         // filtered status arr
-        let _filteredArr = _sortedWeek.filter(weekData => weekData.status === _status);
+        const _filteredArr = _sortedWeek.filter(weekData => weekData.status === _status);
         setShownItems(_filteredArr);
       }
     }
 
-  },[yearFilter, statusFilter, weekFilter, draftData, sort]);
+  },[yearFilter, statusFilter, weekFilter, draftState, sort]);
 
   // on item click, dialog handler
-  const handleListItemClick = (weekData: IStoreYearWeekItem) => {
+  const handleListItemClick = (weekData: ISpUserPeriodData): void => {
     // set draft dialog
     setDraftDialog({
       hidden: false,
       data: weekData
     });
   };
+
+  const handleSendApprovalCLick = (id: number): void => {
+    fetchServer.updatePeriodStatus(id)
+      .then(result => {
+        if (result) {
+          notify({show: true, isError: false, msg:"Draft sent for approval"});
+        }
+      });
+  };
   // how to render a page list
-  const onRenderPage = React.useCallback((props:IPageProps) => {
+  const onRenderPage = React.useCallback((props: IPageProps) => {
     // get list item
-    let _itemsList: IStoreYearWeekItem[] = props.page.items;
-    console.log(props);
+    const _itemsList: ISpUserPeriodData[] = props.page.items;
 
     return (
       <div
@@ -193,11 +197,33 @@ const DraftPage: React.FunctionComponent<IDraftProps> = () => {
             className={gridCLasses.itemContainer}
             data-is-focusable
             key={weekData.status + weekData.week + weekData.year}
-            onClick={() => handleListItemClick(weekData)}
+            onClick={(): void => handleListItemClick(weekData)}
           >
           <span className={gridCLasses.itemLabel}>Week: <strong>{weekData.week}</strong></span>
           <span className={gridCLasses.itemLabel}>Year: <strong>{weekData.year}</strong></span>
           <span className={gridCLasses.itemLabel}>Status: <strong>{weekData.status}</strong></span>
+          <div className={gridCLasses.itemLabel}>
+          <DefaultButton
+            iconProps={{ iconName: 'Add' }}
+            menuAs={_getMenu}
+            menuProps={{
+              items: [
+                {
+                  key: 'emailMessage',
+                  text: 'Send Approval',
+                  iconProps: { iconName: 'Accept' },
+                  onClick: () => handleSendApprovalCLick(weekData.ID)
+                },
+                {
+                  key: 'calendarEvent',
+                  text: 'Cancel',
+                  iconProps: { iconName: 'Cancel' }
+                },
+              ],
+              directionalHintFixed: true
+            }}
+          />
+          </div>
         </div>
         ))}
       </div>
@@ -267,9 +293,9 @@ const DraftPage: React.FunctionComponent<IDraftProps> = () => {
             {shownItems &&
               <FocusZone direction={FocusZoneDirection.vertical}>
                 <List items={shownItems}
-                onRenderPage={onRenderPage}
-                /* onRenderSurface={onRenderSurface} */
-                getItemCountForPage={() => 53}
+                  onRenderPage={onRenderPage}
+                  /* onRenderSurface={onRenderSurface} */
+                  getItemCountForPage={() => 53}
                 />
               </FocusZone>
             }
@@ -293,6 +319,12 @@ const DraftPage: React.FunctionComponent<IDraftProps> = () => {
       }
     </Stack>
   );
+};
+
+// for list generation
+const _getMenu = (menuProps: IContextualMenuProps): JSX.Element => {
+  // Customize contextual menu with menuAs
+  return <ContextualMenu {...menuProps} />;
 };
 
 export default DraftPage;

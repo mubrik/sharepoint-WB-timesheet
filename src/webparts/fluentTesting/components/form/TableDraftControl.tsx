@@ -1,57 +1,43 @@
 import * as React from "react";
 // context data
-import { DateContext, TableDataContext } from "../FluentTesting";
-
+import { TableDataContext } from "../FluentTesting";
 // UI
 import {
   PrimaryButton,
   Stack,
   StackItem,
 } from "office-ui-fabric-react";
-// sampleData and types
-import { IStoreYearWeekItem } from "../dataTypes";
-// utils
-import {
-  weekToDate,
-} from "../utils/utils";
-import {useGetTableDataFromStore} from "../utils/reactHooks";
 // validTypes
-import {ITableDraft} from "./tableTypes";
+import {ITableDraftControlProps} from "./tableTypes";
 
-const TableDraftControl: React.FunctionComponent<ITableDraft> = (
-  props: ITableDraft
-) => {
+const TableDraftControl = (
+  {
+    formMode, hasDraft,
+    setFormMode, validateDataEntries
+  }: ITableDraftControlProps
+): JSX.Element => {
   // if draft avilable return button, else null
   // props to use
-  let draftObj = { ...props.hasDraft };
-  let formMode = props.formMode;
-  // context to use
-  const { setDate }: { setDate: React.Dispatch<React.SetStateAction<Date>> } =
-    React.useContext(DateContext);
-    // table data context
+  const draftObj = { ...hasDraft };
+  // table data context
   const {
       tableData,
       setTableData,
-    }: {
-      tableData: number[] | [];
-      setTableData: React.Dispatch<React.SetStateAction<number[] | []>>;
     } = React.useContext(TableDataContext);
   // handlers
-  const handleButtonClick = () => {
+  const handleButtonClick = (): void => {
     // set date
-    let _draft = draftObj.draft as IStoreYearWeekItem;
-    let _date = weekToDate(+_draft.year, +_draft.week);
-    setDate(_date);
+    const _draft = draftObj.draft;
     // set table as edit
-    setTableData(_draft.itemIds);
-    props.setFormMode("edit");
+    setTableData(_draft);
+    setFormMode("edit");
     // hook?
     // let tableD = useGetTableDataFromStore(_draft.itemIds);
     // context?
     // set the row data
     // props.api.setRowData(tableD);
     // run validation
-    props.validateDataEntries();
+    validateDataEntries();
   };
 
   return (

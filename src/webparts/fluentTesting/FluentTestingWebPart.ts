@@ -6,12 +6,9 @@ import {
   PropertyPaneTextField
 } from '@microsoft/sp-property-pane';
 import { BaseClientSideWebPart } from '@microsoft/sp-webpart-base';
-
 import * as strings from 'FluentTestingWebPartStrings';
 import MainPage, {IMainProps} from './components/FluentTesting';
 import { sp } from "@pnp/sp";
-import "@pnp/sp/webs";
-import requestServer from "./controller/server";
 
 export interface IFluentTestingWebPartProps {
   description: string;
@@ -25,7 +22,6 @@ export default class FluentTestingWebPart extends BaseClientSideWebPart<IFluentT
       {
         description: this.properties.description,
         context: this.context,
-        request: new requestServer(this.context)
       }
     );
 

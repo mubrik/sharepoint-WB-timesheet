@@ -1,9 +1,4 @@
 import * as React from "react";
-// context data
-import { DateContext, RequestContext } from "../FluentTesting";
-import {Validation} from "./TablePage";
-import { IAction, StoreData } from "../FluentTesting";
-import { IServer, IServerReqObject } from "../../controller/serverTypes";
 // UI
 import {
   Stack,
@@ -12,56 +7,51 @@ import {
   MessageBarType,
   Text,
 } from "office-ui-fabric-react";
-// sampleData and types
-import {ISPJsFullItemsObj } from "../dataTypes";
-// utils
-import {
-  getWeekAndYear,
-  delay
-} from "../utils/utils";
+// server
+import fetchServer from "../../controller/server";
+import {IServerReqObject, ISpUserTaskData } from "../../controller/serverTypes";
+// context data
+import {TableDataContext} from "../FluentTesting";
+import {Validation} from "./TablePage";
+// hooks
+import {useGetUserData} from "../hooks";
 import NotificationBar from "../utils/NotificationBar";
 import ResponsivePrimaryButton from "../utils/ResponsiveButton";
 // validTypes
 import {ITableSave, IFormValid} from "./tableTypes";
 
 const TableSaveControl: React.FunctionComponent<ITableSave> = (
-  props: ITableSave
+  {
+    setTablePageState, formMode,
+    api, selectedWeek, selectedYear
+  }: ITableSave
 ) => {
   // date, validation and store context
-  const { date: dateValue }: { date: Date } = React.useContext(DateContext);
   const { validState }: { validState: IFormValid } =
     React.useContext(Validation);
-  const { dispatchStore }: { dispatchStore: React.Dispatch<IAction> } =
-    React.useContext(StoreData);
-  const request:IServer = React.useContext(RequestContext);
+  const { tableData } = React.useContext(TableDataContext);
   // states
   const [isLoading, setIsLoading] = React.useState(false);
   const [notification, setNotification] = React.useState(false);
+  // hooks
+  const {email} = useGetUserData();
   // props
-  const _mainFormMode = props.formMode;
+  const _mainFormMode = formMode;
   // variables
-  let labelMsg = `${_mainFormMode === "new" ? "Creating" : "Updating"} Sheet`;
-  let buttonMsg = `${_mainFormMode === "new" ? "Save" : "Update"} Sheet`;
-  let notificationMsg = `Sheet ${
+  const labelMsg = `${_mainFormMode === "new" ? "Creating" : "Updating"} Sheet`;
+  const buttonMsg = `${_mainFormMode === "new" ? "Save" : "Update"} Sheet`;
+  const notificationMsg = `Sheet ${
     _mainFormMode === "new" ? "Created" : "Updated"
   }`;
 
   // handle save clicked
-  const handleSaveClick = () => {
-    /* if (year === null || week === null) return; */
-    if (dateValue === null) return;
-
-    // butoon loading state
-    setIsLoading(true);
+  const handleSaveClick = (): void => {
 
     // prepare data
-    /* let _week = Number(week.key);
-    let _year = Number(year.text); */
-    let [_week, _year] = getWeekAndYear(dateValue);
-    let _weekData: ISPJsFullItemsObj[] = [];
+    const _weekData: ISpUserTaskData[] = [];
 
     // use grid api
-    props.api.forEachNode((rowNode, _) => {
+    api.forEachNode((rowNode, _) => {
       // not decided if to remove empty node or to fill blank data, blank data for now
       _weekData.push({
         project: "",
@@ -77,33 +67,48 @@ const TableSaveControl: React.FunctionComponent<ITableSave> = (
         ...rowNode.data,
       });
     });
+    // process save depending on formmode
+    if (formMode === "new") {
+      // return for now, throw error later
+      if (selectedYear === null || selectedWeek === null) return;
+  
+      // data
+      const _postData: IServerReqObject = {
+        week: selectedWeek.text,
+        year: selectedYear.text,
+        data: _weekData,
+        status: "draft",
+      };
+  
+      console.log(_postData);
+  
+      // butoon loading state
+      setIsLoading(true);
+      // make request
+      fetchServer.createDraft(email, _postData)
+        .then(result => {
+          setIsLoading(false);
+          setNotification(true);
+        })
+        .catch(error => console.log(error));
 
-    // data
-    let _postData: IServerReqObject = {
-      week: _week,
-      year: _year,
-      data: _weekData,
-      status: "draft",
-    };
+    } else if (formMode == "edit") {
+      console.log(_weekData);
+      console.log(tableData.referenceId);
+      // butoon loading state
+      // setIsLoading(true);
+      // make request
+      fetchServer.updateDraft(tableData.referenceId, _weekData)
+        .then(result => {
+          setIsLoading(false);
+          setNotification(true);
+          // reload the page so new data fetch
+          console.log("etting tab page");
+          setTablePageState("idle");
+        })
+        .catch(error => console.log(error));
+    }
 
-    console.log(_postData);
-
-    // emulating a post request to a server  that returns successful instance
-    let response = delay(3000, _postData);
-    // testing
-    request.createDraft(_postData);
-
-    response.then((result) => {
-      console.log(result);
-      dispatchStore({
-        type: "updateWeek",
-        payload: { data: result },
-      });
-
-      // button state
-      setIsLoading(false);
-      setNotification(true);
-    });
   };
 
   return (

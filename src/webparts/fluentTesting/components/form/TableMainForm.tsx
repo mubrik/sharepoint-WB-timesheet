@@ -1,6 +1,4 @@
 import * as React from "react";
-// context data
-import { DateContext, TableDataContext } from "../FluentTesting";
 // UI
 import {
   Stack,
@@ -19,19 +17,19 @@ import "ag-grid-community/dist/styles/ag-theme-balham.css";
 import { projectOptions, taskOptions, locationOptions } from "./optionSelect";
 // time column editor
 import TimeEditor, { timeValueFormatter } from "./customCellEditor";
-// hooks
-import { useGetDatesHook, useGetTableDataFromStore } from "../utils/reactHooks";
-// utils
-import { secondsToHours } from "date-fns";
 // custom components
 import TableSaveControl from "./TableSaveControl";
 // validTypes
 import {ITableMainForm} from "./tableTypes";
 
 
-const TableMainForm: React.FunctionComponent<ITableMainForm> = (
-  props: ITableMainForm
-) => {
+const TableMainForm = (
+  {
+    totalHoursInSec, formData,
+    formMode, api,
+    onGridReady
+  }: ITableMainForm
+): JSX.Element => {
   // media queries
   const small = useMediaQuery({ maxWidth: 320 });
   const medium = useMediaQuery({ minWidth: 320, maxWidth: 479 });
@@ -40,25 +38,18 @@ const TableMainForm: React.FunctionComponent<ITableMainForm> = (
   const xxlarge = useMediaQuery({ minWidth: 1024, maxWidth: 1365 });
   // const xxxlarge = useMediaQuery({ minWidth: 1366, maxWidth: 1920 });
   // props
-  let _totalTimeInSec = props.totalHoursInSec;
+  const _totalTimeInSec = totalHoursInSec;
 
-  // date, tabledata and storedata context
-  const { tableData }: { tableData: number[] | [] } =
-    React.useContext(TableDataContext);
-  const { date: dateValue }: { date: Date } = React.useContext(DateContext);
-  // date list hook
-  const selectedDates = useGetDatesHook(dateValue ? dateValue : null);
-  // testing
-  let mainTable = useGetTableDataFromStore(tableData);
-  console.log(mainTable);
+
   // format date column labels
   const formatLabel = (day: string, index: number): string => {
     // if date is null for some reason
-    if (selectedDates === null) {
-      return `${day} - `;
-    }
+    // if (selectedDates === null) {
+    //   return `${day} - `;
+    // }
 
-    return `${day}-${selectedDates[index].toLocaleDateString()}`;
+    // return `${day}-${selectedDates[index].toLocaleDateString()}`;
+    return day;
   };
   // time column props
   const timeColProps = {
@@ -123,7 +114,7 @@ const TableMainForm: React.FunctionComponent<ITableMainForm> = (
         horizontalAlign={"space-between"}
         verticalAlign={"center"}
       >
-        {selectedDates && (
+        {/* {selectedDates && (
           <span>
             <strong>Period: </strong>
             {selectedDates[0].toDateString()} to{" "}
@@ -133,22 +124,21 @@ const TableMainForm: React.FunctionComponent<ITableMainForm> = (
         <span>
           <strong>Time Spent: </strong>
           {`${secondsToHours(_totalTimeInSec)} Hours`}
-        </span>
-        <TableSaveControl formMode={props.formMode} api={props.api} />
+        </span> */}
       </Stack>
       <div
         className={"ag-theme-balham"}
         style={{ minHeight: 400, height: "50vh", width: "100%" }}
       >
         <AgGridReact
-          rowData={mainTable}
+          rowData={formData}
           rowSelection="multiple"
           modules={AllCommunityModules}
           enableRangeSelection={true}
           frameworkComponents={{
             timeEditor: TimeEditor,
           }}
-          onGridReady={props.onGridReady}
+          onGridReady={onGridReady}
         >
           <AgGridColumn
             {...choiceColProps}

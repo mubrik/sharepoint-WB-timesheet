@@ -5,6 +5,9 @@ import {Validation} from "./TablePage";
 import {
   Stack,
 } from "office-ui-fabric-react";
+// server
+import fetchServer from "../../controller/server";
+// styles
 import { stylesDanger } from "../utils/utils";
 import { useMediaQuery } from "react-responsive";
 import ResponsivePrimaryButton from "../utils/ResponsiveButton";
@@ -13,7 +16,11 @@ import * as XLSX from "xlsx";
 import {ITableInput, IFormValid} from "./tableTypes";
 
 const TableInputControl: React.FunctionComponent<ITableInput> = (
-  props: ITableInput
+  {
+    formMode, api, rowSelected,
+    validateDataEntries, setRowSelected,
+    calculateTotalTime
+  }: ITableInput
 ) => {
   // context
   const { validState }: { validState: IFormValid } =
@@ -28,8 +35,8 @@ const TableInputControl: React.FunctionComponent<ITableInput> = (
   // effect to set row numbers
   React.useEffect(() => {
     // get row number
-    if (props.api !== null) {
-      let _num = props.api.getDisplayedRowCount();
+    if (api !== null) {
+      const _num = api.getDisplayedRowCount();
 
       setRowNum(_num);
     }
@@ -42,11 +49,11 @@ const TableInputControl: React.FunctionComponent<ITableInput> = (
     []
   );
 
-  const handleAddRowClick = (event: React.MouseEvent<any>) => {
+  const handleAddRowClick = (event: React.MouseEvent<any>): void => {
     // prev default
     event.preventDefault();
     // rows array to add
-    let rowArr = [];
+    const rowArr = [];
     // push new obj into array
     for (let index = 0; index < addRowNum; index++) {
       rowArr.push(new Object());
@@ -54,11 +61,11 @@ const TableInputControl: React.FunctionComponent<ITableInput> = (
     // apply transaction
     try {
       // add rows
-      props.api.applyTransaction({
+      api.applyTransaction({
         add: rowArr,
       });
       // validate data rows after adding
-      props.validateDataEntries();
+      validateDataEntries();
       // update rowsNum
       setRowNum((oldNum) => oldNum + addRowNum);
     } catch (error) {
@@ -66,21 +73,27 @@ const TableInputControl: React.FunctionComponent<ITableInput> = (
     }
   };
 
-  const removeRowClick = (event: React.MouseEvent<any>) => {
+  const removeRowClick = (event: React.MouseEvent<any>): void => {
     // prev default
     event.preventDefault();
     // get selected nodes
-    const selectedNodes = props.api.getSelectedNodes();
+    const selectedNodes = api.getSelectedNodes();
     // map data from nodes
     const selectedData = selectedNodes.map((node) => node.data);
+    // if editing a draft
+    if (formMode === "edit") {
+      // delete on sharepoint as well
+      fetchServer.deleteUserTasks(selectedData);
+    }
+    console.log(selectedData);
     // apply transaction
     try {
       // remove selected nodes from form, validation handled by event handler
-      props.api.applyTransaction({
+      api.applyTransaction({
         remove: selectedData,
       });
       // set selected arrays to empty list
-      props.setRowSelected([]);
+      setRowSelected([]);
       // update rowsNum
       setRowNum((oldNum) => oldNum - selectedData.length);
     } catch (error) {
@@ -89,14 +102,13 @@ const TableInputControl: React.FunctionComponent<ITableInput> = (
   };
 
   // experimental, upload excel
-  const handleFileUpload = () => {
+  const handleFileUpload = (): void => {
     // get ref
-    let fileElem: HTMLInputElement = uploadRef.current;
+    const fileElem: HTMLInputElement = uploadRef.current;
     // get file
-    let xlDoc = fileElem.files[0];
-    console.log(xlDoc);
+    const xlDoc = fileElem.files[0];
     // mini validation
-    let validTypes = [
+    const validTypes = [
       ".xlsx",
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     ];
@@ -105,12 +117,12 @@ const TableInputControl: React.FunctionComponent<ITableInput> = (
       return;
     }
     // make a reader
-    let reader = new FileReader();
+    const reader = new FileReader();
     // set function on load of reader
     reader.onload = () => {
-      var data = new Uint8Array(reader.result as ArrayBuffer);
+      const data = new Uint8Array(reader.result as ArrayBuffer);
       // xlsx read the data
-      var workbook = XLSX.read(data, { type: "array" });
+      const workbook = XLSX.read(data, { type: "array" });
 
       console.log(workbook);
       // populate the form
@@ -120,13 +132,13 @@ const TableInputControl: React.FunctionComponent<ITableInput> = (
     reader.readAsArrayBuffer(xlDoc);
   };
 
-  const populateGridWithWorkbook = (workbook: XLSX.WorkBook) => {
+  const populateGridWithWorkbook = (workbook: XLSX.WorkBook): void => {
     // workbook name by sheet index
-    let firstSheetName = workbook.SheetNames[0];
+    const firstSheetName = workbook.SheetNames[0];
     // sheet by sheet name
-    let worksheet = workbook.Sheets[firstSheetName];
+    const worksheet = workbook.Sheets[firstSheetName];
     // columns
-    let columns = {
+    const columns = {
       A: "project",
       B: "task",
       C: "location",
@@ -142,12 +154,12 @@ const TableInputControl: React.FunctionComponent<ITableInput> = (
     };
 
     // row data
-    let rowData = [];
+    const rowData = [];
     // start index at 2, first row headers
     let rowIndex = 2;
     // iterate over each row in sheet pulling out the columns we're expecting
     while (worksheet["A" + rowIndex]) {
-      let row = {};
+      const row = {};
       Object.keys(columns).forEach((column) => {
         row[columns[column]] = worksheet[column + rowIndex].w;
       });
@@ -157,27 +169,27 @@ const TableInputControl: React.FunctionComponent<ITableInput> = (
       rowIndex++;
     }
     // set data
-    props.api.setRowData(rowData);
+    api.setRowData(rowData);
 
     // validate data entries
-    props.validateDataEntries(props.api);
+    validateDataEntries(api);
 
     // calulate time
-    props.calculateTotalTime(props.api);
+    calculateTotalTime(api);
   };
   // uppload click
-  const handleUploadClick = () => {
+  const handleUploadClick = (): void => {
     // get the actual input and click it
     uploadRef.current.click();
   };
   // testing, handle reset form
-  const handleResetClick = () => {
+  const handleResetClick = (): void => {
     // simply set row data to empty obj
-    props.api.setRowData([]);
+    api.setRowData([]);
     // set number of rows to 0
     setRowNum(0);
     // set selected arrays to empty list
-    props.setRowSelected([]);
+    setRowSelected([]);
   };
 
   return (
@@ -195,7 +207,6 @@ const TableInputControl: React.FunctionComponent<ITableInput> = (
           value={addRowNum}
           max={20}
           min={0}
-          style={{ height: "auto" }}
         />
         <ResponsivePrimaryButton
           iconProps={{ iconName: "AddTo" }}
@@ -211,34 +222,40 @@ const TableInputControl: React.FunctionComponent<ITableInput> = (
           ariaLabel="Remove Selected Rows"
           text="Remove Selected Rows"
           onClick={removeRowClick}
-          disabled={props.rowSelected.length === 0}
+          disabled={rowSelected.length === 0}
           styles={stylesDanger}
         />
-        <ResponsivePrimaryButton
-          title="Upload Excel"
-          ariaLabel="Upload Excel"
-          iconProps={{ iconName: "BulkUpload" }}
-          text={"Upload Excel"}
-          onClick={handleUploadClick}
-        />
-        <input
-          type="file"
-          name="testing"
-          id="testxml"
-          ref={uploadRef}
-          onChange={handleFileUpload}
-          style={{ display: "none" }}
-          accept={
-            ".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-          }
-        />
-        <ResponsivePrimaryButton
-          text={"Reset Form"}
-          onClick={handleResetClick}
-          disabled={validState.msg === "Add a row"}
-          styles={stylesDanger}
-          iconProps={{ iconName: "Delete" }}
-        />
+        {
+          // upload disabled in edit mode
+          formMode === "new" &&
+          <>
+          <ResponsivePrimaryButton
+            title="Upload Excel"
+            ariaLabel="Upload Excel"
+            iconProps={{ iconName: "BulkUpload" }}
+            text={"Upload Excel"}
+            onClick={handleUploadClick}
+          />
+          <input
+            type="file"
+            name="testing"
+            id="testxml"
+            ref={uploadRef}
+            onChange={handleFileUpload}
+            style={{ display: "none" }}
+            accept={
+              ".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            }
+          />
+          <ResponsivePrimaryButton
+            text={"Reset Form"}
+            onClick={handleResetClick}
+            disabled={validState.msg === "Add a row"}
+            styles={stylesDanger}
+            iconProps={{ iconName: "Delete" }}
+          />
+          </>
+        }
       </Stack>
     </>
   );

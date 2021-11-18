@@ -1,39 +1,42 @@
 import { sp } from "@pnp/sp/presets/core";
-import { WebPartContext } from "@microsoft/sp-webpart-base";
-import { ISPJsFullItemsObj } from "../components/dataTypes";
+import {IUserData} from "../components/dataTypes";
+
 
 /* interface */
 export interface IServer {
   fetch: typeof sp;
-  context: WebPartContext|null;
-  getList: () => Promise<any[]>;
-  getUserList: () => Promise<any[]| ISPFullItemsObj[]>;
-  createDraft: (param: IServerReqObject) => Promise<void>;
+  getUser(): Promise<IUserData>;
 }
 
 export interface IServerReqObject {
-  week: string;
-  year: string;
-  data: ISPJsFullItemsObj[];
-  status: string;
+  data: ISpUserTaskData[];
+  week?: string;
+  year?: string;
+  status?: string;
 }
-/* user data object received after filter*/
-export interface ISPFullItemsObj {
-  Id: number;
-  User: string;
-  Projects: string;
-  Description: string;
-  FreshService: string;
-  Location: string;
-  Status: string;
-  Task: string;
-  Year: string;
-  Week: string;
-  Monday: number;
-  Tuesday: number;
-  Wednesday: number;
-  Thursday: number;
-  Friday: number;
-  Saturday: number;
-  Sunday: number;
+
+export interface ISpUserPeriodData {
+  ID: number;
+  referenceId: string;
+  username: string;
+  status: string;
+  year: number;
+  week: number;
+}
+
+export interface ISpUserTaskData {
+  ID?: number;
+  periodReferenceId?: string;
+  project: string;
+  location: string;
+  task: string;
+  freshService: string;
+  description: string;
+  monday: number;
+  tuesday: number;
+  wednesday: number;
+  thursday: number;
+  friday: number;
+  saturday: number;
+  sunday: number;
 }

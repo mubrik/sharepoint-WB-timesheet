@@ -1,12 +1,12 @@
-import { IStoreYearWeekItem } from '../dataTypes';
+import { ISpUserPeriodData } from '../../controller/serverTypes';
 
 // types
 /* props for draft */
 export interface IDraftProps {
-
+  appData?: {};
 }
 /* state for draft component */
 export interface IDraftState {
-  [key: string]: IStoreYearWeekItem[];
-  full: IStoreYearWeekItem[];
+  [key: string]: ISpUserPeriodData[];
+  full: ISpUserPeriodData[];
 }

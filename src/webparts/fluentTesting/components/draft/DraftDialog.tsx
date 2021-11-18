@@ -1,4 +1,5 @@
 import * as React from "react";
+// ui
 import {
   Dialog,
   DialogType,
@@ -6,10 +7,10 @@ import {
   PrimaryButton,
   DefaultButton,
 } from "office-ui-fabric-react";
-import { IStoreYearWeekItem } from "../dataTypes";
+// types
+import { ISpUserPeriodData } from "../../controller/serverTypes";
 // react context
 import {
-  DateContext,
   TableDataContext,
 } from "../FluentTesting";
 import { weekToDate } from "../utils/utils";
@@ -23,69 +24,57 @@ const dialogContentProps = {
 
 interface IDialogProps {
   hidden: boolean;
-  weekData: IStoreYearWeekItem;
+  weekData: ISpUserPeriodData;
   setPageState: (value: React.SetStateAction<string>) => void;
   setDraftDialog: React.Dispatch<React.SetStateAction<any>>;
 }
 
 const DraftDialog: React.FunctionComponent<IDialogProps> = (
-  props: IDialogProps
+  {
+    hidden, weekData,
+    setDraftDialog, setPageState
+  }: IDialogProps
 ) => {
   // dialog state
   const [dialogData, setDialogData] = React.useState({
     title: "",
     subText: "",
-    weekData: props.weekData,
+    weekData: weekData,
     type: DialogType.largeHeader,
   });
   // context data
   const {
-    setDate,
-  }: { setDate: React.Dispatch<React.SetStateAction<null | Date>> } =
-    React.useContext(DateContext);
-  const {
     setTableData,
-  }: {
-    setTableData: React.Dispatch<React.SetStateAction<number[] | []>>;
   } = React.useContext(TableDataContext);
 
   //effect for setting data
   React.useEffect(() => {
     // data from props
-    let _weekData = props.weekData;
-    let _hidden = props.hidden;
-    console.log(props);
+    const _weekData = {...weekData};
 
-    if (!_hidden) {
+    if (!hidden) {
       // set data
       setDialogData((oldData) => {
         return {
           ...oldData,
-          title: `Draft for week ${_weekData.week} year ${_weekData.year}`,
-          subText: `Draft is currently ${_weekData.status}`,
+          title: `Draft for Year ${_weekData.year} Week ${_weekData.week} `,
+          subText: `This item status is currently ${_weekData.status}`,
           weekData: _weekData,
         };
       });
     }
-  }, [props.hidden]);
+  }, [hidden]);
 
   // handlers
   // handle open
-  const handleDraftOpen = () => {
-    // get date from week
-    let _week = dialogData.weekData.week;
-    let _year = dialogData.weekData.year;
-    // date
-    let _date = weekToDate(+_year, +_week);
-    // set date
-    setDate(_date);
+  const handleDraftOpen = (): void => {
     // set table data
     console.log(dialogData);
-    setTableData(dialogData.weekData.itemIds);
+    setTableData(dialogData.weekData);
     // change draft state
-    props.setPageState("edit");
+    setPageState("edit");
     // dismiss dialog
-    props.setDraftDialog((oldData) => {
+    setDraftDialog((oldData) => {
       return {
         ...oldData,
         hidden: true,
@@ -93,22 +82,21 @@ const DraftDialog: React.FunctionComponent<IDialogProps> = (
     });
   };
   // handle dismiss
-  const handleDismiss = () => {
+  const handleDismiss = (): void => {
     // update state to dismiss
-    props.setDraftDialog({ hidden: true, data: null });
+    setDraftDialog({ hidden: true, data: null });
   };
 
   return (
     <>
       <Dialog
-        hidden={props.hidden}
+        hidden={hidden}
         onDismiss={handleDismiss}
         dialogContentProps={dialogData}
         minWidth={"320"}
       >
         <DialogFooter>
           <PrimaryButton text={"Open Draft"} onClick={handleDraftOpen} />
-          <PrimaryButton text={"Send Approval"} />
           <DefaultButton text={"Cancel"} onClick={handleDismiss} />
         </DialogFooter>
       </Dialog>
