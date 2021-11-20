@@ -18,6 +18,7 @@ export const NavBar: React.FunctionComponent<IProps> = (props: IProps) => {
       >
         <PivotItem headerText="Draft" itemKey="drafts" />
         <PivotItem headerText="New" itemKey="new" />
+        <PivotItem headerText="About" itemKey="about" />
       </Pivot>
     </Stack>
   );

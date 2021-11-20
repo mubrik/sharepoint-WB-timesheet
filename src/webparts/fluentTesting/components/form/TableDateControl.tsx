@@ -1,16 +1,8 @@
 import * as React from "react";
 // UI
 import {
-  Stack, IDropdownOption,
-  Label, Dropdown,
-  DatePicker,
-  DayOfWeek,
-  FirstWeekOfYear,
+  IDropdownOption, Dropdown,
 } from "office-ui-fabric-react";
-// utils
-import {
-  getWeekAndYear,
-} from "../utils/utils";
 // validTypes
 import {ITableDate} from "./tableTypes";
 import getISOWeeksInYear from "date-fns/getISOWeeksInYear";
@@ -18,7 +10,7 @@ import { getWeek } from "date-fns";
 
 const TablePeriodControl = (
   
-  {
+  { // props
     formMode, selectedWeek, selectedYear,
     setSelectedWeek,setSelectedYear
   }: ITableDate
@@ -26,7 +18,7 @@ const TablePeriodControl = (
   ): JSX.Element => 
 
   {
-
+  // states
   const [yearOptions, setYearOptions] = React.useState<IDropdownOption[]>(null);
   const [weekOptions, setWeekOptions] = React.useState(null);
 
@@ -82,9 +74,9 @@ const TablePeriodControl = (
   };
 
   return(
-    <Stack horizontal tokens={{childrenGap: 7}}>
+    <>
       {
-        yearOptions &&
+        (yearOptions && formMode == "new") &&
         <Dropdown
           label="Select Year"
           selectedKey={selectedYear ? selectedYear.key : undefined}
@@ -95,7 +87,7 @@ const TablePeriodControl = (
         />
       }
       {
-        weekOptions &&
+        (weekOptions && formMode === "new") &&
         <Dropdown
           label="Select Week"
           selectedKey={selectedWeek ? selectedWeek.key : undefined}
@@ -105,7 +97,7 @@ const TablePeriodControl = (
           disabled={!selectedYear}
         />
       }
-    </Stack>
+    </>
   );
 };
 

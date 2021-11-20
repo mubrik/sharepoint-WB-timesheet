@@ -48,7 +48,6 @@ export const locationOptions: string[] = [
 export const taskOptions: string[] = [
   "INC#",
   "CHN#",
-  "CHN#",
   "Admin",
   "S4H Mock1",
   "S4H Mock2",

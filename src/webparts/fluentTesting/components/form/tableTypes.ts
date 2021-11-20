@@ -39,9 +39,11 @@ export interface ITableDate extends IBaseTableProps {
 }
 
 export interface ITableDraft extends IBaseTableProps {
-  hasDraft: IDraft;
-  setFormMode: React.Dispatch<React.SetStateAction<string>>;
-  validateDataEntries: (api?: GridApi) => boolean;
+  selectedYear: IDropdownOption;
+  selectedWeek: IDropdownOption;
+  setFormMode: React.Dispatch<React.SetStateAction<ITableFormMode>>;
+  setTablePageState: React.Dispatch<React.SetStateAction<ITablePageState>>;
+  validateDataEntries: (api: GridApi) => boolean;
 }
 
 export interface ITableMainForm extends IBaseTableProps {
@@ -61,27 +63,27 @@ export interface ITableInput extends IBaseTableProps {
   column?: ColumnApi | null;
   rowSelected?: number[];
   setRowSelected?: React.Dispatch<React.SetStateAction<number[]>>;
-  validateDataEntries?: (api?: GridApi) => boolean;
-  calculateTotalTime?: (api?: GridApi) => boolean;
+  validateDataEntries?: (api: GridApi) => boolean;
+  calculateTotalTime?: (api: GridApi) => boolean;
 }
 
-export interface ITableControlProps {
-  formMode: ITableFormMode;
-  api: GridApi | null;
-  column?: ColumnApi | null;
-  rowSelected?: number[];
-  setRowSelected?: React.Dispatch<React.SetStateAction<number[]>>;
-  validateDataEntries?: (api?: GridApi) => boolean;
-  calculateTotalTime?: (api?: GridApi) => boolean;
-  setDraftPageState?: React.Dispatch<React.SetStateAction<string>>;
-  totalHoursInSec?: number;
-  onGridReady?: (event: GridReadyEvent) => void;
-}
+// export interface ITableControlProps {
+//   formMode: ITableFormMode;
+//   api: GridApi | null;
+//   column?: ColumnApi | null;
+//   rowSelected?: number[];
+//   setRowSelected?: React.Dispatch<React.SetStateAction<number[]>>;
+//   validateDataEntries?: (api: GridApi) => boolean;
+//   calculateTotalTime?: (api: GridApi) => boolean;
+//   setDraftPageState?: React.Dispatch<React.SetStateAction<string>>;
+//   totalHoursInSec?: number;
+//   onGridReady?: (event: GridReadyEvent) => void;
+// }
 
-export interface ITableDraftControlProps {
-  hasDraft?: IDraft;
-  api: GridApi | null;
-  formMode: string;
-  setFormMode: React.Dispatch<React.SetStateAction<string>>;
-  validateDataEntries?: (api?: GridApi) => boolean;
-}
+// export interface ITableDraftControlProps {
+//   hasDraft?: IDraft;
+//   api: GridApi | null;
+//   formMode: string;
+//   setFormMode: React.Dispatch<React.SetStateAction<string>>;
+//   validateDataEntries?: (api?: GridApi) => boolean;
+// }

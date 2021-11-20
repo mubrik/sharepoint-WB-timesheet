@@ -27,7 +27,7 @@ class ErrorBoundary extends React.Component<IErrorProps, IErrorState> {
     };
   }
 
-  public componentDidCatch(error: Error, info: React.ErrorInfo) {
+  public componentDidCatch(error: Error, info: React.ErrorInfo): void {
     console.log("caught an err");
 
     console.error("Uncaught error:", error, info);
@@ -36,7 +36,7 @@ class ErrorBoundary extends React.Component<IErrorProps, IErrorState> {
     // You can also log the error to an error reporting service
   }
 
-  public render() {
+  public render(): React.ReactNode{
     if (this.state.hasError) {
       // You can render any custom fallback UI
       return (

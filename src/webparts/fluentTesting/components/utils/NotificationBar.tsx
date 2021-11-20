@@ -1,3 +1,4 @@
+// depreceated
 import * as React from "react";
 import { MessageBar, MessageBarType } from "office-ui-fabric-react";
 
@@ -11,7 +12,7 @@ interface INotificationProps {
 const NotificationBar: React.FunctionComponent<INotificationProps> = (
   props: INotificationProps
 ) => {
-  let { show, setShow, msg, barType } = props;
+  const { show, setShow, msg, barType } = props;
 
 /*   // notification state
   const [visible, setVisible] = React.useState(show ? show : false); */
@@ -36,4 +37,4 @@ const NotificationBar: React.FunctionComponent<INotificationProps> = (
   );
 };
 
-export default NotificationBar;
+// export default NotificationBar;

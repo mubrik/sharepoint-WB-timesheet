@@ -65,7 +65,7 @@ const TableInputControl: React.FunctionComponent<ITableInput> = (
         add: rowArr,
       });
       // validate data rows after adding
-      validateDataEntries();
+      validateDataEntries(api);
       // update rowsNum
       setRowNum((oldNum) => oldNum + addRowNum);
     } catch (error) {

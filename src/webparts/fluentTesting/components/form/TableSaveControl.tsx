@@ -15,10 +15,12 @@ import {TableDataContext} from "../FluentTesting";
 import {Validation} from "./TablePage";
 // hooks
 import {useGetUserData} from "../hooks";
-import NotificationBar from "../utils/NotificationBar";
 import ResponsivePrimaryButton from "../utils/ResponsiveButton";
+import useNotificationHook from "../notification/hook";
 // validTypes
 import {ITableSave, IFormValid} from "./tableTypes";
+// error
+import CustomError from "../error/errorTypes";
 
 const TableSaveControl: React.FunctionComponent<ITableSave> = (
   {
@@ -32,17 +34,14 @@ const TableSaveControl: React.FunctionComponent<ITableSave> = (
   const { tableData } = React.useContext(TableDataContext);
   // states
   const [isLoading, setIsLoading] = React.useState(false);
-  const [notification, setNotification] = React.useState(false);
   // hooks
   const {email} = useGetUserData();
+  const notify = useNotificationHook();
   // props
   const _mainFormMode = formMode;
   // variables
   const labelMsg = `${_mainFormMode === "new" ? "Creating" : "Updating"} Sheet`;
   const buttonMsg = `${_mainFormMode === "new" ? "Save" : "Update"} Sheet`;
-  const notificationMsg = `Sheet ${
-    _mainFormMode === "new" ? "Created" : "Updated"
-  }`;
 
   // handle save clicked
   const handleSaveClick = (): void => {
@@ -87,26 +86,47 @@ const TableSaveControl: React.FunctionComponent<ITableSave> = (
       // make request
       fetchServer.createDraft(email, _postData)
         .then(result => {
-          setIsLoading(false);
-          setNotification(true);
+          if (result) {
+            notify({isError: false, show: true, msg: "Draft created successfully"});
+            setIsLoading(false);
+          }
         })
-        .catch(error => console.log(error));
+        .catch(error => {
+          // needed for typescript to catch type
+          if (error instanceof CustomError) {
+            // if custom error
+            notify({isError: true, errorObj: error, msg: error.message, show: true});
+          } else {
+            // error i'm not throwing
+            notify({isError: true, errorObj: error, msg: "Error occured", show: true});
+          }
+          setIsLoading(false);
+        });
 
     } else if (formMode == "edit") {
-      console.log(_weekData);
-      console.log(tableData.referenceId);
       // butoon loading state
-      // setIsLoading(true);
+      setIsLoading(true);
       // make request
       fetchServer.updateDraft(tableData.referenceId, _weekData)
         .then(result => {
-          setIsLoading(false);
-          setNotification(true);
-          // reload the page so new data fetch
-          console.log("etting tab page");
-          setTablePageState("idle");
+          if (result) {
+            notify({isError: false, show: true, msg: "Draft updated successfully"});
+            setIsLoading(false);
+            // reload the page so new data fetch
+            setTablePageState("idle");
+          }
         })
-        .catch(error => console.log(error));
+        .catch(error => {
+          // needed for typescript to catch type
+          if (error instanceof CustomError) {
+            // if custom error
+            notify({isError: true, errorObj: error, msg: error.message, show: true});
+          } else {
+            // error i'm not throwing
+            notify({isError: true, errorObj: error, msg: "Error occured", show: true});
+          }
+          setIsLoading(false);
+        });
     }
 
   };
@@ -114,14 +134,6 @@ const TableSaveControl: React.FunctionComponent<ITableSave> = (
   return (
     <StackItem align={"start"}>
       {isLoading && <ProgressIndicator label={labelMsg} />}
-      {notification && (
-        <NotificationBar
-          barType={MessageBarType.success}
-          show={notification}
-          setShow={setNotification}
-          msg={notificationMsg}
-        />
-      )}
       <Stack
         horizontal
         tokens={{ childrenGap: 9, padding: 3 }}

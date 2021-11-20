@@ -7,20 +7,17 @@ import {
   PrimaryButton,
   DefaultButton,
 } from "office-ui-fabric-react";
+// react context
+import {TableDataContext} from "../FluentTesting";
 // types
 import { ISpUserPeriodData } from "../../controller/serverTypes";
-// react context
-import {
-  TableDataContext,
-} from "../FluentTesting";
-import { weekToDate } from "../utils/utils";
 
-const dialogContentProps = {
-  type: DialogType.largeHeader,
-  title: "Missing Subject",
-  closeButtonAriaLabel: "Close",
-  subText: "Do you want to send this message without a subject?",
-};
+// const dialogContentProps = {
+//   type: DialogType.largeHeader,
+//   title: "Missing Subject",
+//   closeButtonAriaLabel: "Close",
+//   subText: "Do you want to send this message without a subject?",
+// };
 
 interface IDialogProps {
   hidden: boolean;
@@ -31,6 +28,7 @@ interface IDialogProps {
 
 const DraftDialog: React.FunctionComponent<IDialogProps> = (
   {
+    // props
     hidden, weekData,
     setDraftDialog, setPageState
   }: IDialogProps
@@ -96,7 +94,7 @@ const DraftDialog: React.FunctionComponent<IDialogProps> = (
         minWidth={"320"}
       >
         <DialogFooter>
-          <PrimaryButton text={"Open Draft"} onClick={handleDraftOpen} />
+          <PrimaryButton text={"Open Draft"} onClick={handleDraftOpen} disabled={weekData.status !== "Draft"} />
           <DefaultButton text={"Cancel"} onClick={handleDismiss} />
         </DialogFooter>
       </Dialog>

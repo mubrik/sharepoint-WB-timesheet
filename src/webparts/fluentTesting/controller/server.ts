@@ -1,4 +1,5 @@
 import { IList, sp } from "@pnp/sp/presets/core";
+import { IEmailProperties } from "@pnp/sp/sputilities";
 import "@pnp/sp/webs";
 import "@pnp/sp/items";
 import "@pnp/sp/folders";
@@ -14,6 +15,8 @@ import {IServer, ISpUserTaskData,
   IServerReqObject
 } from "./serverTypes";
 import {IUserData} from "../components/dataTypes";
+// error
+import CustomError from "../components/error/errorTypes";
 
 /* handler for CRUD REST requests */
 class Server implements IServer {
@@ -21,10 +24,18 @@ class Server implements IServer {
   public fetch = sp;
   public taskList: IList;
   public periodList: IList;
+  private userId: number = null;
 
   public constructor() {
     this.taskList = this.fetch.web.lists.getByTitle("Timesheet-Dev-Task");
     this.periodList = this.fetch.web.lists.getByTitle("Timesheet-Dev-Period");
+    // this.fetch.web.currentUser()
+    //   .then(result => {
+    //     this.userId = result.Id;
+    //   })
+    //   .catch(error => {
+    //     this.userId = null;
+    //   });
   }
 
   public testing = async (): Promise<void> => {
@@ -58,6 +69,8 @@ class Server implements IServer {
       groups.forEach(grpObj => grpArr.push(grpObj.Title));
       // vars
       const isUserManager = grpArr.includes("LineManagers Approvers");
+      // assign userId
+      this.userId = user.Id;
       // return
       return {
         id: user.Id,
@@ -77,8 +90,9 @@ class Server implements IServer {
   public getUserPeriodList = (username: string): Promise<ISpUserPeriodData[]> => {
     
     return new Promise((resolve, reject) => {
-      this.fetch.web.lists.getByTitle("Timesheet-Dev-Period")
-      .items.filter("username eq '" + username + "'").get()
+      this.periodList
+      .items.filter("username eq '" + username + "'")
+      .get()
       .then(result => resolve(result))
       .catch(error => reject(error));
     });
@@ -87,7 +101,7 @@ class Server implements IServer {
   public getUserPeriodById = (id: number): Promise<ISpUserPeriodData>  => {
 
     return new Promise((resolve, reject) => {
-      this.fetch.web.lists.getByTitle("Timesheet-Dev-Period")
+      this.periodList
       .items.getById(id).get()
       .then(result => resolve(result))
       .catch(error => reject(error));
@@ -97,8 +111,9 @@ class Server implements IServer {
   public getUserPeriodByReference = (reference: string): Promise<ISpUserPeriodData[]>  => {
 
     return new Promise((resolve, reject) => {
-      this.fetch.web.lists.getByTitle("Timesheet-Dev-Period")
-      .items.filter("referenceId eq '" + reference + "'").get()
+      this.periodList
+      .items.filter("referenceId eq '" + reference + "'")
+      .get()
       .then(result => resolve(result))
       .catch(error => reject(error));
     });
@@ -107,8 +122,9 @@ class Server implements IServer {
   public getUserTaskByReference = (reference: string): Promise<ISpUserTaskData[]>  => {
 
     return new Promise((resolve, reject) => {
-      this.fetch.web.lists.getByTitle("Timesheet-Dev-Task")
-      .items.filter("periodReferenceId eq '" + reference + "'").get()
+      this.taskList
+      .items.filter("periodReferenceId eq '" + reference + "'")
+      .get()
       .then(result => resolve(result))
       .catch(error => reject(error));
     });
@@ -116,22 +132,24 @@ class Server implements IServer {
 
   public createDraft = async (username: string, request: IServerReqObject): Promise<boolean> => {
 
+    // user id necessary
+    if (this.userId === null) {
+      throw new CustomError("Error getting user");
+    }
     // first create a ref id
     // for now
-    const _refId = `${request.year}${request.week}`;
+    const _refId = `${request.year}${request.week}${this.userId}`;
     console.log("refid", _refId);
     // check if id exists
     const itemExistArray = await this.getUserPeriodByReference(_refId);
     // if it does
     if (itemExistArray.length > 0) {
-      throw new Error("This item exist");
+      throw new CustomError("There's a Draft available already");
     }
 
     // create period obj
     const addItemPeriod = 
-      await this.fetch.web.lists
-      .getByTitle("Timesheet-Dev-Period")
-      .items.add({
+      await this.periodList.items.add({
         username: username,
         year: +request.year,
         week: +request.week,
@@ -142,19 +160,17 @@ class Server implements IServer {
       console.log(addItemPeriod);
       console.log("period created");
     } else {
-      throw new Error("Error creating period item");
+      throw new CustomError("Error creating period item", "serverError");
     }
     
-    // create task obj
-    const list = this.fetch.web.lists.getByTitle("Timesheet-Dev-Task");
     // entity name needed for bacth update
-    const entityName = await list.getListItemEntityTypeFullName();
+    const entityName = await this.taskList.getListItemEntityTypeFullName();
     // create batch
     const batch = sp.web.createBatch();
     // loop tasks
     request.data.forEach(task => {
       // add task
-      list.items.inBatch(batch).add({
+      this.taskList.items.inBatch(batch).add({
         periodReferenceId: _refId,
         project: task.project,
         location: task.location,
@@ -181,10 +197,9 @@ class Server implements IServer {
   }
 
   public updateDraft = async (referenceId: string, request: ISpUserTaskData[]): Promise<boolean> => {
-    // only list we need for update
-    const list = this.fetch.web.lists.getByTitle("Timesheet-Dev-Task");
+
     // entity name needed for bacth update
-    const entityName = await list.getListItemEntityTypeFullName();
+    const entityName = await this.taskList.getListItemEntityTypeFullName();
     // work on later
     const updateItems: ISpUserTaskData[] = [];
     const newItems: ISpUserTaskData[] = [];
@@ -201,14 +216,14 @@ class Server implements IServer {
     if (newItems.length > 0) {
       // reference needed for update
       if (referenceId === "" || typeof referenceId === "undefined") {
-        throw Error("Reference Id is empty");
+        throw new CustomError("Reference Id is empty");
       }
       // create batch
       const newBatch = sp.web.createBatch();
       // loop array
       newItems.forEach(task => {
         // add task
-        list.items.inBatch(newBatch).add({
+        this.taskList.items.inBatch(newBatch).add({
           periodReferenceId: referenceId,
           project: task.project,
           location: task.location,
@@ -238,7 +253,7 @@ class Server implements IServer {
     // loop update array
     updateItems.forEach(task => {
       // add task to upddate
-      list.items.getById(task.ID).inBatch(updateBatch).update({
+      this.taskList.items.getById(task.ID).inBatch(updateBatch).update({
         project: task.project,
         location: task.location,
         task: task.task,
@@ -263,13 +278,11 @@ class Server implements IServer {
 
   public deleteUserTasks = async (tasks: ISpUserTaskData[]): Promise<boolean> => {
 
-    // list needed 
-    const list = this.fetch.web.lists.getByTitle("Timesheet-Dev-Task");
     // loop over array of tasks
     tasks.forEach(task => {
       // list can contain new items, so filter id
       if ("ID" in task) {
-        list.items.getById(task.ID).delete();
+        this.taskList.items.getById(task.ID).delete();
       }
     });
 
@@ -281,6 +294,29 @@ class Server implements IServer {
     await this.periodList.items.getById(id).update({status: "Pending" });
 
     return true;
+  }
+
+  public sendFeedback = (email: string, rating: number, feedback: string): Promise<boolean> => {
+
+    return new Promise((resolve, reject) => {
+      // split string
+      const domain = email.split("@")[1];
+      // construct mail
+      const To = [`webpartfeedback@${domain}`];
+      const Subject = `Feedback from ${email}`;
+      const Body = `Rated: ${rating} stars, Feedback: ${feedback}`;
+      // body
+      const emailProps: IEmailProperties = {
+        To,
+        Subject,
+        Body
+      };
+      console.log(emailProps);
+      // send
+      this.fetch.utility.sendEmail(emailProps)
+        .then(_ => resolve(true))
+        .catch(error => reject(error));
+    });
   }
 
 }

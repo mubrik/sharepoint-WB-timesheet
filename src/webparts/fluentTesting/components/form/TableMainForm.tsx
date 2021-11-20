@@ -17,8 +17,6 @@ import "ag-grid-community/dist/styles/ag-theme-balham.css";
 import { projectOptions, taskOptions, locationOptions } from "./optionSelect";
 // time column editor
 import TimeEditor, { timeValueFormatter } from "./customCellEditor";
-// custom components
-import TableSaveControl from "./TableSaveControl";
 // validTypes
 import {ITableMainForm} from "./tableTypes";
 

@@ -23,6 +23,8 @@ import {IDraftProps, IDraftState} from "./draftTypes";
 import {compareWeekPeriod} from "../utils/utils";
 // notification
 import useNotificationHook from '../notification/hook';
+// error
+import CustomError from '../error/errorTypes';
 
 // styles
 const gridCLasses = mergeStyleSets({
@@ -138,7 +140,7 @@ const DraftPage: React.FunctionComponent<IDraftProps> = () => {
 
     // check if data empty
     if (arrayToSet.length === 0) {
-      setShownItems(null);
+      setShownItems([]);
     } else {
       // filter by weeek
       const _filteredWeek = (weekFilter && weekFilter !== "0") ?
@@ -178,6 +180,15 @@ const DraftPage: React.FunctionComponent<IDraftProps> = () => {
       .then(result => {
         if (result) {
           notify({show: true, isError: false, msg:"Draft sent for approval"});
+        }
+      })
+      .catch(error => {
+        if (error instanceof CustomError) {
+          // if custom error
+          notify({isError: true, errorObj: error, msg: error.message, show: true});
+        } else {
+          // error i'm not throwing
+          notify({isError: true, errorObj: error, msg: "Error occured", show: true});
         }
       });
   };
@@ -243,6 +254,7 @@ const DraftPage: React.FunctionComponent<IDraftProps> = () => {
   return (
     <Stack tokens={{ childrenGap: 7, padding: 2 }}>
       {
+        // list of items
         pageState === "list" &&
         <>
           {
@@ -255,49 +267,45 @@ const DraftPage: React.FunctionComponent<IDraftProps> = () => {
             />
           }
           <Stack horizontal tokens={{ childrenGap: 10, padding: 8 }}>
-            <StackItem>
-              <Dropdown
-                selectedKey={yearFilter ? yearFilter.key : "full"}
-                label="Filter Year"
-                options={yearOptions}
-                onChange={(_,item) => setYearFilter(item)}
-              />
-            </StackItem>
-            <StackItem>
+            <Dropdown
+              selectedKey={yearFilter ? yearFilter.key : "full"}
+              label="Filter Year"
+              options={yearOptions}
+              onChange={(_,item) => setYearFilter(item)}
+            />
             <Dropdown
               selectedKey={statusFilter ? statusFilter.key : "full"}
               label={"Filter Status"}
               options={controlledStatus}
               onChange={(_,item) => setStatusFilter(item)}
             />
-          </StackItem>
-            <StackItem>
             <Dropdown
               selectedKey={sort ? sort.key : "up"}
               label={"Sort"}
               options={controlledSort}
               onChange={(_,item) => setSort(item)}
             />
-          </StackItem>
-            <StackItem>
-              <TextField
-                label={'Filter by Week'}
-                onChange={(_, text) => setweekFilter(text)}
-                type={"number"}
-                min={0}
-                max={53}
-              />
-            </StackItem>
+            <TextField
+              label={'Filter by Week'}
+              onChange={(_, text) => setweekFilter(text)}
+              type={"number"}
+              min={0}
+              max={53}
+            />
           </Stack>
-          <Stack>
-            {shownItems &&
+          <Stack tokens={{ childrenGap: 7, padding: 2 }}>
+            {(shownItems && shownItems.length > 0) ?
               <FocusZone direction={FocusZoneDirection.vertical}>
                 <List items={shownItems}
                   onRenderPage={onRenderPage}
                   /* onRenderSurface={onRenderSurface} */
+                  // limited to 53, draft never shows more than 53 weeks. filter
                   getItemCountForPage={() => 53}
                 />
-              </FocusZone>
+              </FocusZone> :
+              <StackItem>
+                Empty list, create a new draft
+              </StackItem>
             }
             {
               !shownItems &&
@@ -309,6 +317,7 @@ const DraftPage: React.FunctionComponent<IDraftProps> = () => {
         </>
       }
       {
+        // editing a draft, load table page
         pageState === "edit" &&
         <>
           <TablePage

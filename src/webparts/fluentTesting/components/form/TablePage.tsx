@@ -53,10 +53,10 @@ const initialValidState = {
   msg: "",
   tableState: { state: false, msg: "" },
 };
-const initialDraftState: { state: boolean; draft: ISpUserTaskData | {} } = {
-  state: false,
-  draft: {},
-};
+// const initialDraftState: { state: boolean; draft: ISpUserTaskData | null } = {
+//   state: false,
+//   draft: {},
+// };
 
 const TablePage: React.FunctionComponent<IProps> = (props: IProps) => {
   // props to be used
@@ -71,7 +71,7 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps) => {
   const [tablePageState, setTablePageState] = React.useState<ITablePageState>("idle");
   const [formData, setFormData] = React.useState<ISpUserTaskData[]>([]);
   const [totalHoursInSec, setTotalHoursInSec] = React.useState<number | null>(0);
-  const [hasDraft, setHasDraft] = React.useState(initialDraftState);
+  // const [hasDraft, setHasDraft] = React.useState(initialDraftState);
   // validation state, memo validation value to ease rerender
   const [validState, setValidState] = React.useState(initialValidState);
   const validationValue = React.useMemo(
@@ -177,37 +177,25 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps) => {
   }, [selectedWeek, totalHoursInSec, validState.tableState]);
 
   // draft checker effect
-  React.useEffect(() => {
-    // checks if selected period has an available draft
-    // if (selectedWeek === null) return;
-    // // get week and year
-    // let [_week, _year] = getWeekAndYear(dateValue);
-    // console.log(_week, _year);
-    // // store has year
-    // if (storeData.status === "loaded") {
-    //   if (storeData.data.yearList.includes(_year)) {
-    //     // find if week exists
-    //     let _draftItem = storeData.data.years[_year].find((weekData) => {
-    //       return weekData.week === _week;
-    //     });
-    //     // doesnt exist
-    //     if (typeof _draftItem === "undefined") {
-    //       return;
-    //     }
-    //     // exist
-    //     setHasDraft({
-    //       state: true,
-    //       draft: _draftItem,
-    //     });
-    //   }
-    // }
-    /* if (_year in storeData.data && _week in storeData.data[_year]) {
-      setHasDraft({
-        state: false,
-        draft: storeData[_year][_week]
-      });
-    } */
-  }, [selectedWeek]);
+  // React.useEffect(() => {
+  //   // checks if selected period has an available draft
+  //   if (selectedYear === null || selectedWeek === null) return;
+
+  //   // reference id
+  //   const referenceId = `${selectedYear.key}${selectedWeek.key}`;
+  //   // ask server if it exists
+  //   fetchServer.getUserPeriodByReference(referenceId)
+  //     .then(result => {
+  //       if (result.length > 0) {
+  //         // item exist
+  //         setHasDraft()
+  //       }
+  //     })
+  //     .catch(error => console.log(error));
+
+  //   // response
+
+  // }, [selectedWeek, selectedYear]);
 
   // just a list of stuff
   const weekDays = [
@@ -387,23 +375,26 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps) => {
           setDraftPageState={props.setDraftPage}
           api={gridApi}
         />
-        <TableDateControl
-          formMode={formMode}
-          api={gridApi}
-          selectedYear={selectedYear}
-          selectedWeek={selectedWeek}
-          setSelectedWeek={setSelectedWeek}
-          setSelectedYear={setSelectedYear}
-          totalHoursInSec={totalHoursInSec}
-        />
-        <TableDraftControl
-          // hasDraft={hasDraft}
-          api={gridApi}
-          formMode={formMode}
-          setFormMode={setFormMode}
-          validateDataEntries={validateDataEntries}
-        />
-
+        <Stack horizontal tokens={{childrenGap: 7}} verticalAlign="end">
+          <TableDateControl
+            formMode={formMode}
+            api={gridApi}
+            selectedYear={selectedYear}
+            selectedWeek={selectedWeek}
+            setSelectedWeek={setSelectedWeek}
+            setSelectedYear={setSelectedYear}
+            totalHoursInSec={totalHoursInSec}
+          />
+          <TableDraftControl
+            api={gridApi}
+            formMode={formMode}
+            selectedWeek={selectedWeek}
+            selectedYear={selectedYear}
+            setFormMode={setFormMode}
+            setTablePageState={setTablePageState}
+            validateDataEntries={validateDataEntries}
+          />
+        </Stack>
         {
           tablePageState === "loading" ?
           <>

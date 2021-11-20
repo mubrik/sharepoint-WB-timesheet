@@ -8,7 +8,7 @@ interface IEditorProps extends React.ComponentPropsWithoutRef<any> {
 
 const TimeEditor = React.forwardRef((props: IEditorProps, ref) => {
   // check for prop value
-  let timeVal = props.value ? parseFloat(props.value) : 0;
+  const timeVal = props.value ? parseFloat(props.value) : 0;
   // states
   const [inputValue, setInputValue] = React.useState<number>(timeVal);
   const refInput = React.useRef(null);
@@ -40,7 +40,7 @@ const TimeEditor = React.forwardRef((props: IEditorProps, ref) => {
           return true;
         }
 
-        let valueString = inputValue.toString();
+        const valueString = inputValue.toString();
         // anything not in 0.0, 10.0 is invalid
         if (valueString.length >= 4) {
           return true;
@@ -48,7 +48,7 @@ const TimeEditor = React.forwardRef((props: IEditorProps, ref) => {
         // a decimal is only way length === 3 if val 0 < 24
         if (valueString.length === 3) {
           // limited for now
-          let [_hour, _minute] = valueString.split(".");
+          const [_hour, _minute] = valueString.split(".");
 
           if (Number(_minute) > 6) {
             return true;
@@ -81,12 +81,14 @@ const TimeEditor = React.forwardRef((props: IEditorProps, ref) => {
   );
 });
 
-const timeValueFormatter = (event: ValueFormatterParams) => {
-  let _numberValue: number = event.value ? event.value : null;
+TimeEditor.displayName = "Time Editor";
+
+const timeValueFormatter = (event: ValueFormatterParams): string => {
+  const _numberValue: number = event.value ? event.value : null;
 
   if (_numberValue === null) return "";
 
-  let _numberString = _numberValue.toString();
+  const _numberString = _numberValue.toString();
 
   if (_numberString.length <= 2) {
     return `${_numberValue} Hrs`;
@@ -94,7 +96,7 @@ const timeValueFormatter = (event: ValueFormatterParams) => {
 
   if (_numberString.length === 3) {
     // split
-    let [_hour, _minute] = _numberString.split(".");
+    const [_hour, _minute] = _numberString.split(".");
 
     if (Number(_hour) === 0) {
       return `${Number(_minute) * 10} Mins`;

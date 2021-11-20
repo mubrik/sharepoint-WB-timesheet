@@ -1,57 +1,93 @@
 import * as React from "react";
 // context data
-import { TableDataContext } from "../FluentTesting";
+import { TableDataContext, UserDataContext } from "../FluentTesting";
 // UI
 import {
   PrimaryButton,
-  Stack,
   StackItem,
+  Spinner, SpinnerSize,
+  IconButton
 } from "office-ui-fabric-react";
-// validTypes
-import {ITableDraftControlProps} from "./tableTypes";
+// server
+import fetchServer from "../../controller/server";
+import { ISpUserPeriodData } from "../../controller/serverTypes";
+
+// types
+import {ITableDraft} from "./tableTypes";
+type IHasDraft = "true" | "false" | "loading";
+type IDraftObj = ISpUserPeriodData;
 
 const TableDraftControl = (
   {
-    formMode, hasDraft,
-    setFormMode, validateDataEntries
-  }: ITableDraftControlProps
+    // props
+    formMode, selectedWeek,
+    selectedYear, setTablePageState,
+    setFormMode,
+  }: ITableDraft
+
 ): JSX.Element => {
-  // if draft avilable return button, else null
-  // props to use
-  const draftObj = { ...hasDraft };
+  // if draft avilable return button, else check icon
   // table data context
-  const {
-      tableData,
-      setTableData,
-    } = React.useContext(TableDataContext);
+  const { setTableData } = React.useContext(TableDataContext);
+  const { id } = React.useContext(UserDataContext);
+  // states
+  const [hasDraft, setHasDraft] = React.useState<IHasDraft>("loading");
+  const [draftPeriodObj, setDraftPeriodObj] = React.useState<IDraftObj>(null);
+
+  // draft checker effect
+  React.useEffect(() => {
+    // checks if selected period has an available draft
+    if (selectedYear === null || selectedWeek === null) return;
+    setHasDraft("loading");
+    // reference id
+    const referenceId = `${selectedYear.key}${selectedWeek.key}${id}`;
+    // ask server if it exists
+    fetchServer.getUserPeriodByReference(referenceId)
+      .then(result => {
+        if (result.length > 0) {
+          // item exist
+          setHasDraft("true");
+          setDraftPeriodObj(result[0]);
+        } else {
+          setHasDraft("false");
+          setDraftPeriodObj(null);
+        }
+      })
+      .catch(error => console.log(error));
+
+  }, [selectedWeek, selectedYear]);
+
   // handlers
   const handleButtonClick = (): void => {
-    // set date
-    const _draft = draftObj.draft;
-    // set table as edit
-    setTableData(_draft);
+
+    // change table data context
+    setTableData(draftPeriodObj);
+    // set form mode
     setFormMode("edit");
-    // hook?
-    // let tableD = useGetTableDataFromStore(_draft.itemIds);
-    // context?
-    // set the row data
-    // props.api.setRowData(tableD);
-    // run validation
-    validateDataEntries();
+    // reload page
+    setTablePageState("idle");
   };
 
   return (
-    <Stack
-      horizontal
-      tokens={{ childrenGap: 7, padding: 2 }}
-      horizontalAlign={"center"}
-    >
-      {draftObj.state && formMode === "new" ? (
-        <StackItem>
-          <PrimaryButton text={"Draft Available"} onClick={handleButtonClick} />
-        </StackItem>
-      ) : null}
-    </Stack>
+    <>
+      {
+        (formMode === "new" && selectedWeek) && 
+        <>
+          {
+          hasDraft === "true" ? (
+            <StackItem>
+              <PrimaryButton text={"Draft Available"} onClick={handleButtonClick} />
+            </StackItem>
+          ) : 
+          hasDraft === "loading" ? (
+            <Spinner size={SpinnerSize.small}/>
+          ) : (
+            <IconButton iconProps={{iconName: "SkypeCheck"}}/>
+          )
+          }
+        </>
+      }
+    </>
   );
 };
 

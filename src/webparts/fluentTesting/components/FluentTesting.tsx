@@ -8,6 +8,7 @@ import { createTheme } from '@uifabric/styling';
 import { NavBar } from "./nav/Navbar";
 import DraftPage from './draft/DraftPage';
 import TablePage from "./form/TablePage";
+import AboutPage from './about/AboutPage';
 // sample data and types
 import { IUserData} from "./dataTypes";
 import { WebPartContext } from "@microsoft/sp-webpart-base";
@@ -116,6 +117,9 @@ const MainPage: React.FunctionComponent<IMainProps> = () => {
                 {pageState === "drafts" &&
                   <DraftPage
                   />
+                }
+                {pageState === "about" &&
+                  <AboutPage/>
                 }
                 {/* <PrimaryButton
                   text='test'
