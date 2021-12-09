@@ -33,6 +33,7 @@ const TableDraftControl = (
   // states
   const [hasDraft, setHasDraft] = React.useState<IHasDraft>("loading");
   const [draftPeriodObj, setDraftPeriodObj] = React.useState<IDraftObj>(null);
+  const [draftStatus, setDraftStatus] = React.useState("");
 
   // draft checker effect
   React.useEffect(() => {
@@ -45,6 +46,12 @@ const TableDraftControl = (
     fetchServer.getUserPeriodByReference(referenceId)
       .then(result => {
         if (result.length > 0) {
+          // draft status
+          const _draftStatus = result[0].status === "Approved" ? "Approved" :
+              (result[0].status === "Pending") ? "Pending" :
+              (result[0].status === "Rejected") ? "Rejected" : "Available";
+          // set
+          setDraftStatus(_draftStatus);
           // item exist
           setHasDraft("true");
           setDraftPeriodObj(result[0]);
@@ -76,7 +83,11 @@ const TableDraftControl = (
           {
           hasDraft === "true" ? (
             <StackItem>
-              <PrimaryButton text={"Draft Available"} onClick={handleButtonClick} />
+              <PrimaryButton 
+                text={`Draft ${draftStatus}`} 
+                onClick={handleButtonClick} 
+                disabled={draftStatus === "Approved" || draftStatus === "Pending"}
+              />
             </StackItem>
           ) : 
           hasDraft === "loading" ? (

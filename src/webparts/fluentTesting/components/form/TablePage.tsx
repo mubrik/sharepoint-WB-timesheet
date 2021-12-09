@@ -254,7 +254,6 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps) => {
     event.api.addEventListener(
       "virtualRowRemoved",
       (_event: VirtualRowRemovedEvent) => {
-        console.log("row removed");
         validateDataEntries(_event.api);
       }
     );
@@ -308,7 +307,6 @@ const TablePage: React.FunctionComponent<IProps> = (props: IProps) => {
   // validate data in table
   const validateDataEntries = (api: GridApi): boolean => {
 
-    console.log("validating");
     // if grid api valid
     if (api === null) return false;
     // iteration control

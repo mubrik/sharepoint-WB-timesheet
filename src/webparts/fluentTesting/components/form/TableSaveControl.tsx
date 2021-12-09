@@ -35,7 +35,7 @@ const TableSaveControl: React.FunctionComponent<ITableSave> = (
   // states
   const [isLoading, setIsLoading] = React.useState(false);
   // hooks
-  const {email} = useGetUserData();
+  const {email, manager} = useGetUserData();
   const notify = useNotificationHook();
   // props
   const _mainFormMode = formMode;
@@ -84,7 +84,7 @@ const TableSaveControl: React.FunctionComponent<ITableSave> = (
       // butoon loading state
       setIsLoading(true);
       // make request
-      fetchServer.createDraft(email, _postData)
+      fetchServer.createDraft(email, manager, _postData)
         .then(result => {
           if (result) {
             notify({isError: false, show: true, msg: "Draft created successfully"});

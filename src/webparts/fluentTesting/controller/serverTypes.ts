@@ -19,6 +19,7 @@ export interface ISpUserPeriodData {
   ID: number;
   referenceId: string;
   username: string;
+  lineManager: string;
   status: string;
   year: number;
   week: number;

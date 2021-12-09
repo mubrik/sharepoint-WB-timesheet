@@ -29,13 +29,6 @@ class Server implements IServer {
   public constructor() {
     this.taskList = this.fetch.web.lists.getByTitle("Timesheet-Dev-Task");
     this.periodList = this.fetch.web.lists.getByTitle("Timesheet-Dev-Period");
-    // this.fetch.web.currentUser()
-    //   .then(result => {
-    //     this.userId = result.Id;
-    //   })
-    //   .catch(error => {
-    //     this.userId = null;
-    //   });
   }
 
   public testing = async (): Promise<void> => {
@@ -61,7 +54,24 @@ class Server implements IServer {
       const profile = await this.fetch.profiles.myProperties.get();
       const user = await this.fetch.web.currentUser();
       const groups = await this.fetch.web.currentUser.groups();
-      
+      // manager
+      const managersArr: string[] = profile.ExtendedManagers;
+      let manager = "";
+      // for fse
+      if (profile.Title === "Field Support Engineer") {
+        // 2nd item to skip first
+        const managerLogName = managersArr[managersArr.length - 2];
+        // get managers profile
+        const managerProfile = await this.fetch.profiles.getPropertiesFor(managerLogName);
+        // store email
+        manager = managerProfile.Email;
+      } else {
+        const managerLogName = managersArr[managersArr.length - 1];
+        // get managers profile
+        const managerProfile = await this.fetch.profiles.getPropertiesFor(managerLogName);
+        // store email
+        manager = managerProfile.Email;
+      }
       // groups
       // arr
       const grpArr: string[] = [];
@@ -77,6 +87,7 @@ class Server implements IServer {
         email: profile.Email,
         displayName: profile.DisplayName,
         jobTitle: profile.Title,
+        manager,
         isUserManager,
       };
 
@@ -130,7 +141,7 @@ class Server implements IServer {
     });
   }
 
-  public createDraft = async (username: string, request: IServerReqObject): Promise<boolean> => {
+  public createDraft = async (username: string, manager: string, request: IServerReqObject): Promise<boolean> => {
 
     // user id necessary
     if (this.userId === null) {
@@ -151,6 +162,7 @@ class Server implements IServer {
     const addItemPeriod = 
       await this.periodList.items.add({
         username: username,
+        lineManager: manager,
         year: +request.year,
         week: +request.week,
         referenceId: _refId

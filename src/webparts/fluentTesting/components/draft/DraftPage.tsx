@@ -54,6 +54,26 @@ const initialState: IDraftState = {
   full: [],
 };
 
+// status filter keys
+const controlledStatus = [
+  { key: "Draft", text: "Draft" },
+  { key: "Pending", text: "Pending" },
+  { key: "Approved", text: "Approved" },
+  { key: "full", text: "All" },
+];
+
+// sorting
+const controlledSort = [
+  { key: "up", text: "Ascending" },
+  { key: "down", text: "Decending" },
+];
+
+// for list generation
+const _getMenu = (menuProps: IContextualMenuProps): JSX.Element => {
+  // Customize contextual menu with menuAs
+  return <ContextualMenu {...menuProps} />;
+};
+
 const DraftPage: React.FunctionComponent<IDraftProps> = () => {
 
   // list data, data list should be async set in production
@@ -74,20 +94,6 @@ const DraftPage: React.FunctionComponent<IDraftProps> = () => {
   const [yearOptions, setYearOptions] = React.useState<IDropdownOption[]>([{ key: "full", text: "All" }]);
   // notification
   const notify = useNotificationHook();
-
-  // status filter keys
-  const controlledStatus = [
-    { key: "Draft", text: "Draft" },
-    { key: "Pending", text: "Pending" },
-    { key: "Approved", text: "Approved" },
-    { key: "full", text: "All" },
-  ];
-
-  // sorting
-  const controlledSort = [
-    { key: "up", text: "Ascending" },
-    { key: "down", text: "Decending" },
-  ];
 
   // effect for fetching data
   React.useEffect(() => {
@@ -125,12 +131,19 @@ const DraftPage: React.FunctionComponent<IDraftProps> = () => {
           ...prevValue,
           ..._draftData
         }));
+      })
+      .catch(error => {
+        // most likely network or user doenst exist
+        notify({isError: true, errorObj: error, msg: "Error fetching user data", show: true});
       });
     }
   },[userData]);
 
   // use effect for handling filter states change
   React.useEffect(() => {
+    // jnull probably loading
+    if (shownItems === null) return;
+
     const _year = yearFilter.key;
     const _status = statusFilter.key;
     const _sort = sort.key;
@@ -255,7 +268,7 @@ const DraftPage: React.FunctionComponent<IDraftProps> = () => {
     <Stack tokens={{ childrenGap: 7, padding: 2 }}>
       {
         // list of items
-        pageState === "list" &&
+        (pageState === "list" && shownItems) &&
         <>
           {
             !draftDialog.hidden &&
@@ -294,7 +307,9 @@ const DraftPage: React.FunctionComponent<IDraftProps> = () => {
             />
           </Stack>
           <Stack tokens={{ childrenGap: 7, padding: 2 }}>
-            {(shownItems && shownItems.length > 0) ?
+            {
+              // if successful and not empty
+              (shownItems && shownItems.length > 0) ?
               <FocusZone direction={FocusZoneDirection.vertical}>
                 <List items={shownItems}
                   onRenderPage={onRenderPage}
@@ -302,18 +317,23 @@ const DraftPage: React.FunctionComponent<IDraftProps> = () => {
                   // limited to 53, draft never shows more than 53 weeks. filter
                   getItemCountForPage={() => 53}
                 />
-              </FocusZone> :
+              </FocusZone> : (shownItems && shownItems.length === 0) ? 
               <StackItem>
                 Empty list, create a new draft
-              </StackItem>
-            }
-            {
-              !shownItems &&
+              </StackItem> :
+              // null, loading
               <>
                 <Spinner label={"Loading User Data"} ariaLive="assertive" labelPosition="top"></Spinner>
               </>
             }
           </Stack>
+        </>
+      }
+      {
+        (pageState === "list" && !shownItems) && 
+        // null, loading
+        <>
+          <Spinner label={"Loading User Data"} ariaLive="assertive" labelPosition="top"></Spinner>
         </>
       }
       {
@@ -330,10 +350,6 @@ const DraftPage: React.FunctionComponent<IDraftProps> = () => {
   );
 };
 
-// for list generation
-const _getMenu = (menuProps: IContextualMenuProps): JSX.Element => {
-  // Customize contextual menu with menuAs
-  return <ContextualMenu {...menuProps} />;
-};
+
 
 export default DraftPage;

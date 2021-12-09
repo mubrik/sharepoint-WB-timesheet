@@ -5,6 +5,7 @@ import { ISpUserTaskData } from "../controller/serverTypes";
 export interface IUserData {
   id: number;
   email: string;
+  manager: string;
   displayName: string;
   jobTitle: string;
   isUserManager: boolean;
